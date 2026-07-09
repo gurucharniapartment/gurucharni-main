@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertCircle, RefreshCw, BarChart3, ChevronRight, Wallet } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
@@ -13,12 +13,12 @@ import type { FlatStatus } from '@/lib/calc'
 type SortKey = 'dues' | 'flat_asc' | 'flat_desc' | 'amount_desc' | 'amount_asc'
 type FilterKey = 'all' | 'due' | 'grace' | 'advance' | 'clear'
 
-const STATUS: Record<FlatStatus, { dot: string; chip: string; edge: string }> = {
-  clear:        { dot: 'bg-[var(--color-status-clear)]',    chip: 'bg-[var(--color-status-clear-bg)] text-[var(--color-status-clear)]',       edge: '' },
-  advance:      { dot: 'bg-[var(--color-status-clear)]',    chip: 'bg-[var(--color-status-clear-bg)] text-[var(--color-status-clear)]',       edge: '' },
-  cooldown:     { dot: 'bg-[var(--color-status-cooldown)]', chip: 'bg-[var(--color-status-cooldown-bg)] text-[var(--color-status-cooldown)]', edge: '' },
-  due:          { dot: 'bg-[var(--color-status-due)]',      chip: 'bg-[var(--color-status-due-bg)] text-[var(--color-status-due)]',           edge: 'ring-1 ring-[var(--color-status-due)]/15' },
-  unconfigured: { dot: 'bg-[var(--color-status-neutral)]',  chip: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)]',   edge: '' },
+const STATUS: Record<FlatStatus, { chip: string; text: string }> = {
+  clear:        { chip: 'bg-[var(--color-status-clear-bg)] text-[var(--color-status-clear)]',       text: 'text-[var(--color-status-clear)]' },
+  advance:      { chip: 'bg-[var(--color-status-clear-bg)] text-[var(--color-status-clear)]',       text: 'text-[var(--color-status-clear)]' },
+  cooldown:     { chip: 'bg-[var(--color-status-cooldown-bg)] text-[var(--color-status-cooldown)]', text: 'text-[var(--color-status-cooldown)]' },
+  due:          { chip: 'bg-[var(--color-status-due-bg)] text-[var(--color-status-due)]',           text: 'text-[var(--color-status-due)]' },
+  unconfigured: { chip: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)]',   text: 'text-[var(--color-muted-foreground)]' },
 }
 
 const ORDER: Record<FlatStatus, number> = { due: 0, cooldown: 1, clear: 2, advance: 2, unconfigured: 3 }
@@ -28,56 +28,46 @@ function FlatCard({ f }: { f: FlatWithDue }) {
   const s = f.due
   const st = STATUS[s.status]
 
-  let detail: ReactNode
-  if (s.status === 'advance' || s.status === 'clear') {
-    detail = (
-      <span className="text-[var(--color-muted-foreground)]">
-        {t('paid_through')} {s.paidThroughIdx != null ? monthLabel(s.paidThroughIdx, lang) : ''}
-      </span>
-    )
+  // Big amount + small caption at the bottom, colour-coded by status.
+  let primary: string
+  let secondary: string
+  if (s.status === 'advance') {
+    primary = t('status_advance')
+    secondary = s.paidThroughIdx != null ? `${t('till')} ${monthLabel(s.paidThroughIdx, lang)}` : ''
+  } else if (s.status === 'clear') {
+    primary = t('status_clear')
+    secondary = s.paidThroughIdx != null ? `${t('up_to')} ${monthLabel(s.paidThroughIdx, lang)}` : ''
   } else if (s.status === 'cooldown') {
-    detail = (
-      <span className="font-medium text-[var(--color-status-cooldown)]">
-        {formatRupees(s.dueAmount)} · {t('in_grace')}
-      </span>
-    )
+    primary = formatRupees(s.currentMonthDue)
+    secondary = t('in_grace')
   } else if (s.status === 'due') {
-    detail = s.arrears > 0 ? (
-      <span className="font-medium text-[var(--color-status-due)]">
-        {formatRupees(s.arrears)} {t('due_label')}
-        <span className="font-normal text-[var(--color-muted-foreground)]"> + {formatRupees(s.currentMonthDue)} {t('this_month_charge').toLowerCase()}</span>
-      </span>
-    ) : (
-      <span className="font-medium text-[var(--color-status-due)]">
-        {formatRupees(s.dueAmount)} {t('due_label')}
-      </span>
-    )
+    primary = formatRupees(s.arrears > 0 ? s.arrears : s.currentMonthDue)
+    secondary = s.arrears > 0
+      ? `+ ${formatRupees(s.currentMonthDue)} ${t('this_month_charge').toLowerCase()}`
+      : t('st_overdue')
   } else {
-    detail = <span className="text-[var(--color-muted-foreground)]">—</span>
+    primary = '—'
+    secondary = t('status_unconfigured')
   }
 
   return (
-    <Link to={`/flat/${f.id}`} className="block">
-    <Card
-      className={cn(
-        'cursor-pointer p-3.5 transition-shadow duration-200 hover:shadow-[var(--shadow-hover)]',
-        st.edge,
-      )}
-    >
-      <div className="flex items-start gap-2.5">
-        <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold', st.chip)}>
-          {f.sort_order}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-semibold leading-tight tracking-tight break-words">{flatName(f, lang)}</div>
-          <div className="text-[11px] text-[var(--color-muted-foreground)]">{f.id}</div>
-          <span className={cn('mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium', st.chip)}>
-            {t(`status_${s.status}`)}
+    <Link to={`/flat/${f.id}`} className="block h-full">
+      <Card
+        className={cn(
+          'flex h-full min-h-[104px] cursor-pointer flex-col p-3 transition-shadow duration-200 hover:shadow-[var(--shadow-hover)]',
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold', st.chip)}>
+            {f.sort_order}
           </span>
+          <span className="min-w-0 flex-1 truncate text-[14px] font-semibold tracking-tight">{flatName(f, lang)}</span>
         </div>
-      </div>
-      <div className="mt-2.5 text-[12px] leading-tight">{detail}</div>
-    </Card>
+        <div className="mt-auto pt-3">
+          <div className={cn('text-[18px] font-bold leading-none display-tight', st.text)}>{primary}</div>
+          <div className="mt-1 text-[11px] leading-tight text-[var(--color-muted-foreground)]">{secondary}</div>
+        </div>
+      </Card>
     </Link>
   )
 }

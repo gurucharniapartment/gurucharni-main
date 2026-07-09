@@ -178,6 +178,8 @@ const STRINGS: Dict = {
   col_name: { en: 'Name', mr: 'नाव' },
   nobody_owes: { en: 'No flats have outstanding dues 🎉', mr: 'कोणत्याही सदनिकेची थकबाकी नाही 🎉' },
   who_owes: { en: 'Who has dues', mr: 'कोणाची थकबाकी' },
+  till: { en: 'till', mr: 'पर्यंत' },
+  up_to: { en: 'up to', mr: 'यापर्यंत' },
 
   loading: { en: 'Loading…', mr: 'लोड होत आहे…' },
   error_loading: { en: 'Could not load data. Check your connection.', mr: 'डेटा लोड करता आला नाही. कनेक्शन तपासा.' },
