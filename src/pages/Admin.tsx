@@ -248,6 +248,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>
+          <p className="text-[11px] text-[var(--color-muted-foreground)]">{t('date_format_note')}</p>
           {suggested > 0 && (
             <button type="button" onClick={() => setAmount(String(suggested))} className="text-[12px] font-medium text-[var(--color-primary)]">
               {t('use_suggested')}: {formatRupees(suggested)}
@@ -323,6 +324,7 @@ function ExpenseDialog({ data, reload }: { data: AppData; reload: () => void }) 
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>
+          <p className="text-[11px] text-[var(--color-muted-foreground)]">{t('date_format_note')}</p>
           <Field label={t('remark')}>
             <Input value={remark} onChange={(e) => setRemark(e.target.value)} />
           </Field>

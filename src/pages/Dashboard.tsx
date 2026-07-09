@@ -204,6 +204,8 @@ export function Dashboard() {
           {sorted.map((f) => <FlatCard key={f.id} f={f} />)}
         </div>
       )}
+
+      <p className="mt-6 text-center text-[11px] text-[var(--color-muted-foreground)]">{t('date_format_note')}</p>
     </div>
   )
 }

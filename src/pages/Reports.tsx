@@ -75,8 +75,8 @@ export function Reports() {
           </Field>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            <Field label={t('from')}><Input type="month" min={minMonth} value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
-            <Field label={t('to')}><Input type="month" min={minMonth} value={to} onChange={(e) => setTo(e.target.value)} /></Field>
+            <Field label={t('from')}><Input type="month" min={minMonth} value={from} onChange={(e) => { setFrom(e.target.value); if (e.target.value > to) setTo(e.target.value) }} /></Field>
+            <Field label={t('to')}><Input type="month" min={from} value={to} onChange={(e) => setTo(e.target.value)} /></Field>
           </div>
         )}
         <div className="mt-4 flex divide-x divide-[var(--color-border)] border-t border-[var(--color-border)] pt-3">
@@ -157,15 +157,20 @@ export function Reports() {
 
             <div className="mt-4 border-t border-[var(--color-border)] pt-3">
               <div className="space-y-1">
-                {[...periodExpenses].sort((a, b) => a.expense_date.localeCompare(b.expense_date)).map((e) => (
-                  <div key={e.id} className="flex items-center justify-between text-[12px]">
-                    <span className="min-w-0 truncate">
-                      <span className="text-[var(--color-muted-foreground)]">{e.expense_date}</span> · {catName(e.category_id)}
-                      <span className="text-[var(--color-muted-foreground)]"> · {e.remark}</span>
-                    </span>
-                    <span className="shrink-0 tabular-nums">{formatRupees(e.amount)}</span>
-                  </div>
-                ))}
+                {[...periodExpenses].sort((a, b) => a.expense_date.localeCompare(b.expense_date)).map((e) => {
+                  const cat = catName(e.category_id)
+                  return (
+                    <div key={e.id} className="flex items-center justify-between text-[12px]">
+                      <span className="min-w-0 truncate">
+                        <span className="text-[var(--color-muted-foreground)]">{e.expense_date}</span> · {cat}
+                        {e.remark && e.remark !== cat && (
+                          <span className="text-[var(--color-muted-foreground)]"> · {e.remark}</span>
+                        )}
+                      </span>
+                      <span className="shrink-0 tabular-nums">{formatRupees(e.amount)}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </>

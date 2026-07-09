@@ -45,7 +45,7 @@ const STRINGS: Dict = {
   sort_amount_asc: { en: 'Amount low→high', mr: 'रक्कम कमी→जास्त' },
   filter_all: { en: 'All', mr: 'सर्व' },
   filter_due: { en: 'Due', mr: 'थकबाकी' },
-  filter_grace: { en: 'In grace', mr: 'सवलतीत' },
+  filter_grace: { en: 'Current month pending', mr: 'चालू महिना बाकी' },
   filter_advance: { en: 'Advance', mr: 'आगाऊ' },
   filter_clear: { en: 'Paid', mr: 'भरले' },
   no_flats_match: { en: 'No flats match', mr: 'कोणतीही सदनिका जुळत नाही' },
@@ -92,7 +92,7 @@ const STRINGS: Dict = {
 
   paid_through: { en: 'Paid through', mr: 'यापर्यंत भरले' },
   due_label: { en: 'due', mr: 'थकबाकी' },
-  in_grace: { en: 'in grace', mr: 'सवलतीत' },
+  in_grace: { en: 'current month pending', mr: 'चालू महिना बाकी' },
   total_advance: { en: 'Advance held', mr: 'आगाऊ जमा' },
 
   admin_login: { en: 'Admin Login', mr: 'प्रशासक लॉगिन' },
@@ -175,7 +175,7 @@ const STRINGS: Dict = {
   in_advance: { en: 'In advance', mr: 'आगाऊ' },
   all_paid: { en: 'All paid', mr: 'सर्व भरले' },
   st_overdue: { en: 'Overdue', mr: 'मुदत उलटली' },
-  st_grace: { en: 'In grace period', mr: 'सवलत कालावधीत' },
+  st_grace: { en: 'Current month pending', mr: 'चालू महिना बाकी' },
   st_advance: { en: 'Paid in advance', mr: 'आगाऊ भरले' },
   st_paid_up: { en: 'Paid up', mr: 'भरले' },
   outstanding_before: { en: 'Outstanding (before this month)', mr: 'या महिन्यापूर्वीची थकबाकी' },
@@ -190,6 +190,11 @@ const STRINGS: Dict = {
   who_owes: { en: 'Who has dues', mr: 'कोणाची थकबाकी' },
   till: { en: 'till', mr: 'पर्यंत' },
   up_to: { en: 'up to', mr: 'यापर्यंत' },
+  before_month: { en: 'before', mr: 'पूर्वीची' },
+  status_col: { en: 'Status', mr: 'स्थिती' },
+  cleared_title: { en: 'Cleared & paid ahead', mr: 'भरलेले व आगाऊ' },
+  no_cleared: { en: 'No flats are fully paid yet', mr: 'अद्याप कोणतीही सदनिका पूर्ण भरलेली नाही' },
+  date_format_note: { en: 'Dates are shown in YYYY-MM-DD format', mr: 'दिनांक YYYY-MM-DD स्वरूपात दाखवले आहेत' },
 
   loading: { en: 'Loading…', mr: 'लोड होत आहे…' },
   error_loading: { en: 'Could not load data. Check your connection.', mr: 'डेटा लोड करता आला नाही. कनेक्शन तपासा.' },
