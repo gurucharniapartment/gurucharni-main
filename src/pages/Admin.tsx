@@ -619,7 +619,7 @@ export function Admin() {
       const s = f.due
       let st: string
       if (s.status === 'advance') st = `Advance till ${monthLabel(s.paidThroughIdx!, 'en')}`
-      else if (s.status === 'clear') st = 'Paid ✅'
+      else if (s.status === 'clear') st = 'Paid'
       else if (s.status === 'cooldown') st = `*${formatRupees(s.currentMonthDue)}* (${curMonth})`
       else if (s.status === 'due') st = s.arrears > 0
         ? `*${formatRupees(s.arrears)} overdue* + ${formatRupees(s.currentMonthDue)} (${curMonth})`
