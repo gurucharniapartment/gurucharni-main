@@ -138,3 +138,18 @@ body {
   letter-spacing: -0.03em;
   font-feature-settings: "tnum" 1;
 }
+
+/* Print: show only the .printable content (statements & receipts) */
+@media print {
+  header,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .printable {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

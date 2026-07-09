@@ -14,6 +14,7 @@ import {
   currentMonthIndex, currentMonthInput, monthIndex, monthIndexToISO, monthInputToISO,
   monthLabel, todayISODate, todayIST,
 } from '@/lib/dates'
+import { supabase } from '@/lib/supabase'
 import { toCSV, downloadCSV } from '@/lib/csv'
 import { monthlyTotals } from '@/lib/reports'
 import {
@@ -564,6 +565,44 @@ function ExportSection({ data, computed }: { data: AppData; computed: Computed }
   )
 }
 
+/* ---------------- Activity (audit) log ---------------- */
+interface AuditRow {
+  id: number; actor: string | null; action: string; entity: string; entity_id: string | null; created_at: string
+}
+function AuditLog() {
+  const { t } = useI18n()
+  const [rows, setRows] = useState<AuditRow[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(50)
+      .then(({ data }) => { setRows((data as AuditRow[]) ?? []); setLoading(false) })
+  }, [])
+  const when = (iso: string) =>
+    new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return (
+    <Card className="mt-4 p-4">
+      <h3 className="mb-3 text-[15px] font-semibold">{t('activity_log')}</h3>
+      {loading ? (
+        <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+      ) : rows.length === 0 ? (
+        <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_records')}</p>
+      ) : (
+        <div className="divide-y divide-[var(--color-border)]">
+          {rows.map((r) => (
+            <div key={r.id} className="flex items-baseline justify-between gap-2 py-2 text-[13px]">
+              <span className="min-w-0 flex-1 truncate">
+                <span className="font-medium capitalize">{r.action}</span>
+                <span className="text-[var(--color-muted-foreground)]"> · {r.entity}{r.entity_id ? ` #${r.entity_id}` : ''}{r.actor ? ` · ${r.actor}` : ''}</span>
+              </span>
+              <span className="shrink-0 text-[12px] text-[var(--color-muted-foreground)]">{when(r.created_at)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export function Admin() {
   const { t } = useI18n()
   const { signOut } = useAuth()
@@ -610,6 +649,7 @@ export function Admin() {
       <Transactions data={data} reload={reload} />
 
       <ExportSection data={data} computed={computed} />
+      <AuditLog />
     </div>
   )
 }

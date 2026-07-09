@@ -52,9 +52,10 @@ function FlatCard({ f }: { f: FlatWithDue }) {
   }
 
   return (
+    <Link to={`/flat/${f.id}`} className="block">
     <Card
       className={cn(
-        'p-3.5 transition-shadow duration-200 hover:shadow-[var(--shadow-hover)]',
+        'cursor-pointer p-3.5 transition-shadow duration-200 hover:shadow-[var(--shadow-hover)]',
         st.edge,
       )}
     >
@@ -69,6 +70,7 @@ function FlatCard({ f }: { f: FlatWithDue }) {
       </div>
       <div className="mt-2 text-[12px] leading-tight">{detail}</div>
     </Card>
+    </Link>
   )
 }
 
