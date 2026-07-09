@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   Design tokens — Apple-inspired: restrained, muted, hairline.
+   Colours in hex/rgb for precise control of tint subtlety.
+   ============================================================ */
+:root {
+  --radius: 1rem; /* 16px cards, iOS-like */
+
+  --background: #f5f5f7;      /* Apple light-gray canvas */
+  --foreground: #1d1d1f;      /* Apple near-black text */
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+
+  --primary: #0071e3;         /* Apple system blue — used sparingly */
+  --primary-foreground: #ffffff;
+  --secondary: #eeeef0;       /* light control fill */
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #86868b; /* Apple secondary text */
+  --accent: #f0f0f2;
+  --accent-foreground: #1d1d1f;
+  --destructive: #d9363e;
+
+  --border: rgba(0, 0, 0, 0.09); /* hairline */
+  --input: rgba(0, 0, 0, 0.14);
+  --ring: rgba(0, 113, 227, 0.5);
+
+  /* Muted, desaturated status colours (soft tint bg + calm text) */
+  --status-due: #c23b41;
+  --status-due-bg: #fbeeef;
+  --status-cooldown: #1f6fd6;
+  --status-cooldown-bg: #edf3fc;
+  --status-clear: #1a8250;
+  --status-clear-bg: #ebf5ef;
+  --status-neutral: #86868b;
+  --status-neutral-bg: #f0f0f2;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #f5f5f7;
+  --card: #1c1c1e;
+  --card-foreground: #f5f5f7;
+  --popover: #1c1c1e;
+  --popover-foreground: #f5f5f7;
+
+  --primary: #0a84ff;
+  --primary-foreground: #ffffff;
+  --secondary: #2c2c2e;
+  --secondary-foreground: #f5f5f7;
+  --muted: #1c1c1e;
+  --muted-foreground: #98989d;
+  --accent: #2c2c2e;
+  --accent-foreground: #f5f5f7;
+  --destructive: #ff453a;
+
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.18);
+  --ring: rgba(10, 132, 255, 0.6);
+
+  --status-due: #ff6961;
+  --status-due-bg: rgba(255, 69, 58, 0.14);
+  --status-cooldown: #6ba6ff;
+  --status-cooldown-bg: rgba(10, 132, 255, 0.14);
+  --status-clear: #4cd07d;
+  --status-clear-bg: rgba(52, 199, 89, 0.14);
+  --status-neutral: #98989d;
+  --status-neutral-bg: rgba(255, 255, 255, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-status-due: var(--status-due);
+  --color-status-due-bg: var(--status-due-bg);
+  --color-status-cooldown: var(--status-cooldown);
+  --color-status-cooldown-bg: var(--status-cooldown-bg);
+  --color-status-clear: var(--status-clear);
+  --color-status-clear-bg: var(--status-clear-bg);
+  --color-status-neutral: var(--status-neutral);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 6px);
+  --radius-sm: calc(var(--radius) - 10px);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Inter", "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
+
+  /* soft, layered shadows (very subtle) */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.05), 0 8px 28px rgba(0, 0, 0, 0.07);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+/* Tighten tracking on large display numbers, Apple-style */
+.display-tight {
+  letter-spacing: -0.03em;
+  font-feature-settings: "tnum" 1;
+}

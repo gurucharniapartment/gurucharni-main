@@ -1,0 +1,163 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+
+export type Lang = 'en' | 'mr'
+
+type Dict = Record<string, { en: string; mr: string }>
+
+// All user-facing strings. Data (flat numbers, amounts) is never translated.
+const STRINGS: Dict = {
+  app_title: { en: 'Gurucharni Apartment', mr: 'गुरुचरणी अपार्टमेंट' },
+  app_subtitle: { en: 'Maintenance Management', mr: 'देखभाल व्यवस्थापन' },
+
+  available_balance: { en: 'Available in Bank', mr: 'बँकेत उपलब्ध' },
+  in_bank_note: { en: 'Held in the building bank account', mr: 'इमारतीच्या बँक खात्यात' },
+  totals_note: { en: 'Collected & spent are since July 2026 · dues as of today', mr: 'जमा व खर्च जुलै २०२६ पासून · थकबाकी आजची' },
+  reports_cta_desc: { en: 'See where the money was spent, month by month', mr: 'महिन्यागणिक पैसा कुठे खर्च झाला ते पाहा' },
+  pay: { en: 'Pay', mr: 'भरा' },
+  pay_cta: { en: 'Pay Maintenance', mr: 'देखभाल भरा' },
+  pay_cta_desc: { en: 'Pay for one or more months via UPI', mr: 'UPI द्वारे एक किंवा अधिक महिने भरा' },
+  pay_page_title: { en: 'Pay Maintenance', mr: 'देखभाल भरा' },
+  how_many_months: { en: 'How many months', mr: 'किती महिने' },
+  you_owe: { en: 'You currently owe', mr: 'सध्याची थकबाकी' },
+  upi_not_set: { en: 'UPI is not set up yet', mr: 'UPI अद्याप सेट केलेले नाही' },
+  pay_via_upi: { en: 'Pay via UPI', mr: 'UPI द्वारे भरा' },
+  scan_upi: { en: 'Scan with PhonePe, Google Pay, or any UPI app', mr: 'PhonePe, Google Pay किंवा कोणत्याही UPI अ‍ॅपने स्कॅन करा' },
+  open_upi_app: { en: 'Open UPI app', mr: 'UPI अ‍ॅप उघडा' },
+
+  // Sort / filter
+  sort_by: { en: 'Sort', mr: 'क्रमवारी' },
+  filter_by: { en: 'Show', mr: 'दाखवा' },
+  sort_dues_first: { en: 'Dues first', mr: 'थकबाकी आधी' },
+  sort_flat_asc: { en: 'Flat ↑', mr: 'सदनिका ↑' },
+  sort_flat_desc: { en: 'Flat ↓', mr: 'सदनिका ↓' },
+  sort_amount_desc: { en: 'Amount high→low', mr: 'रक्कम जास्त→कमी' },
+  sort_amount_asc: { en: 'Amount low→high', mr: 'रक्कम कमी→जास्त' },
+  filter_all: { en: 'All', mr: 'सर्व' },
+  filter_due: { en: 'Due', mr: 'थकबाकी' },
+  filter_grace: { en: 'In grace', mr: 'सवलतीत' },
+  filter_advance: { en: 'Advance', mr: 'आगाऊ' },
+  filter_clear: { en: 'Paid', mr: 'भरले' },
+  no_flats_match: { en: 'No flats match', mr: 'कोणतीही सदनिका जुळत नाही' },
+
+  // Reports
+  reports: { en: 'Reports', mr: 'अहवाल' },
+  monthly_report: { en: 'Monthly Report', mr: 'मासिक अहवाल' },
+  select_month: { en: 'Select month', mr: 'महिना निवडा' },
+  custom_range: { en: 'Custom range', mr: 'सानुकूल कालावधी' },
+  from: { en: 'From', mr: 'पासून' },
+  to: { en: 'To', mr: 'पर्यंत' },
+  spent_this_period: { en: 'Spent this period', mr: 'या कालावधीत खर्च' },
+  collected_this_period: { en: 'Collected this period', mr: 'या कालावधीत जमा' },
+  where_spent: { en: 'Where it was spent', mr: 'कुठे खर्च झाले' },
+  no_expenses_period: { en: 'No expenses in this period', mr: 'या कालावधीत खर्च नाही' },
+  back: { en: 'Back', mr: 'मागे' },
+
+  // Export / reminders
+  export_csv: { en: 'Export CSV', mr: 'CSV निर्यात' },
+  export_payments: { en: 'Payments', mr: 'पेमेंट' },
+  export_expenses: { en: 'Expenses', mr: 'खर्च' },
+  export_flats: { en: 'Flats', mr: 'सदनिका' },
+  electricity_reminder: { en: 'Electricity bill for this month is not entered yet.', mr: 'या महिन्याचे वीज बिल अद्याप नोंदवलेले नाही.' },
+  enter_now: { en: 'Enter now', mr: 'आता नोंदवा' },
+  bank_opening: { en: 'Bank opening balance', mr: 'बँक प्रारंभिक शिल्लक' },
+  set_bank_balance: { en: 'Set bank balance', mr: 'बँक शिल्लक सेट करा' },
+  total_collected: { en: 'Total Collected', mr: 'एकूण जमा' },
+  total_spent: { en: 'Total Spent', mr: 'एकूण खर्च' },
+  total_dues: { en: 'Outstanding Dues', mr: 'थकबाकी' },
+
+  flats: { en: 'Flats', mr: 'सदनिका' },
+  flat: { en: 'Flat', mr: 'सदनिका' },
+  residential: { en: 'Residential', mr: 'निवासी' },
+  tenant_occupied: { en: 'Tenant', mr: 'भाडेकरू' },
+
+  status_clear: { en: 'Paid', mr: 'भरले' },
+  status_advance: { en: 'Advance', mr: 'आगाऊ' },
+  status_cooldown: { en: 'Please pay', mr: 'कृपया भरा' },
+  status_due: { en: 'Due', mr: 'थकबाकी' },
+  status_unconfigured: { en: 'Setup needed', mr: 'सेटअप आवश्यक' },
+
+  paid_through: { en: 'Paid through', mr: 'यापर्यंत भरले' },
+  due_label: { en: 'due', mr: 'थकबाकी' },
+  in_grace: { en: 'in grace', mr: 'सवलतीत' },
+  total_advance: { en: 'Advance held', mr: 'आगाऊ जमा' },
+
+  admin_login: { en: 'Admin Login', mr: 'प्रशासक लॉगिन' },
+  logout: { en: 'Logout', mr: 'लॉगआउट' },
+  email: { en: 'Email', mr: 'ईमेल' },
+  password: { en: 'Password', mr: 'पासवर्ड' },
+  login: { en: 'Login', mr: 'लॉगिन' },
+  admin: { en: 'Admin', mr: 'प्रशासक' },
+
+  // Admin
+  flat_setup: { en: 'Flat setup', mr: 'सदनिका सेटअप' },
+  record_payment: { en: 'Record payment', mr: 'पेमेंट नोंदवा' },
+  add_expense: { en: 'Add expense', mr: 'खर्च जोडा' },
+  monthly_charge: { en: 'Monthly charge (₹)', mr: 'मासिक शुल्क (₹)' },
+  opening_position: { en: 'Current position', mr: 'सद्य स्थिती' },
+  opening_due_amount: { en: 'Amount owed (₹)', mr: 'थकबाकी रक्कम (₹)' },
+  advance_through: { en: 'Paid in advance through', mr: 'आगाऊ भरले यापर्यंत' },
+  after_payment: { en: 'After payment', mr: 'पेमेंट नंतर' },
+  pay_maintenance: { en: 'Maintenance', mr: 'देखभाल' },
+  pay_clear_dues: { en: 'Clear dues', mr: 'थकबाकी भरा' },
+  for_months: { en: 'For which months', mr: 'कोणत्या महिन्यांसाठी' },
+  use_suggested: { en: 'Use suggested', mr: 'सुचवलेली रक्कम' },
+  current_balance: { en: 'Current balance', mr: 'सद्य शिल्लक' },
+  advance_short: { en: 'advance', mr: 'आगाऊ' },
+  flat_type_label: { en: 'Flat type', mr: 'सदनिका प्रकार' },
+  effective_from: { en: 'Effective from', mr: 'पासून लागू' },
+  months: { en: 'Months', mr: 'महिने' },
+  amount: { en: 'Amount', mr: 'रक्कम' },
+  remark: { en: 'Remark', mr: 'शेरा' },
+  category: { en: 'Category', mr: 'श्रेणी' },
+  date: { en: 'Date', mr: 'दिनांक' },
+  note: { en: 'Note (optional)', mr: 'टीप (पर्यायी)' },
+  save: { en: 'Save', mr: 'जतन करा' },
+  cancel: { en: 'Cancel', mr: 'रद्द करा' },
+  covers: { en: 'Covers', mr: 'व्याप्ती' },
+  total: { en: 'Total', mr: 'एकूण' },
+  recent_payments: { en: 'Recent payments', mr: 'अलीकडील पेमेंट' },
+  recent_expenses: { en: 'Recent expenses', mr: 'अलीकडील खर्च' },
+  void: { en: 'Void', mr: 'रद्द' },
+  voided: { en: 'Voided', mr: 'रद्द केले' },
+  no_records: { en: 'No records yet', mr: 'अद्याप नोंदी नाहीत' },
+  select_flat: { en: 'Select flat', mr: 'सदनिका निवडा' },
+  saved: { en: 'Saved', mr: 'जतन केले' },
+  quick_actions: { en: 'Quick actions', mr: 'त्वरित क्रिया' },
+  clear_baseline: { en: 'Clear (unconfigure)', mr: 'रिकामे करा' },
+  confirm_void: { en: 'Void this record? It stays in history but is removed from all totals.', mr: 'ही नोंद रद्द करायची? ती इतिहासात राहील पण सर्व गणनेतून काढली जाईल.' },
+
+  loading: { en: 'Loading…', mr: 'लोड होत आहे…' },
+  error_loading: { en: 'Could not load data. Check your connection.', mr: 'डेटा लोड करता आला नाही. कनेक्शन तपासा.' },
+  retry: { en: 'Retry', mr: 'पुन्हा प्रयत्न करा' },
+  as_of: { en: 'As of', mr: 'दिनांक' },
+  view_public: { en: 'Public View', mr: 'सार्वजनिक दृश्य' },
+}
+
+interface I18nCtx {
+  lang: Lang
+  setLang: (l: Lang) => void
+  t: (key: keyof typeof STRINGS | string) => string
+}
+
+const Ctx = createContext<I18nCtx | null>(null)
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>(
+    () => (localStorage.getItem('lang') as Lang) || 'en',
+  )
+  useEffect(() => {
+    localStorage.setItem('lang', lang)
+    document.documentElement.lang = lang
+  }, [lang])
+
+  const t = (key: string) => STRINGS[key]?.[lang] ?? key
+  const setLang = (l: Lang) => setLangState(l)
+
+  return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>
+}
+
+export function useI18n() {
+  const ctx = useContext(Ctx)
+  if (!ctx) throw new Error('useI18n must be used within I18nProvider')
+  return ctx
+}
