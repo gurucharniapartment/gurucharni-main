@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { expensesInRange, totalsByCategory, sumAmount } from './reports'
+import { expensesInRange, totalsByCategory, sumAmount, monthlyTotals } from './reports'
 import { toCSV } from './csv'
-import type { Expense } from './types'
+import { makeMonthIndex } from './dates'
+import type { Expense, Payment } from './types'
 
 function exp(id: number, categoryId: number, amount: number, date: string, is_void = false): Expense {
   return {
@@ -45,6 +46,28 @@ describe('totalsByCategory + sumAmount', () => {
   })
   it('sum excludes void and out-of-range', () => {
     expect(sumAmount(july)).toBe(8700)
+  })
+})
+
+function pay(id: number, flat: string, amount: number, date: string, is_void = false): Payment {
+  return {
+    id, flat_id: flat, payment_date: date, kind: 'maintenance', months_covered: 1,
+    covered_months: null, amount, covers_from: null, covers_to: null, note: null,
+    is_void, created_by: null, created_at: '',
+  }
+}
+
+describe('monthlyTotals', () => {
+  const JUL = makeMonthIndex(2026, 7)
+  const AUG = makeMonthIndex(2026, 8)
+  const payments = [pay(1, 'G1', 800, '2026-07-05'), pay(2, 'G2', 850, '2026-08-10'), pay(3, 'G3', 400, '2026-07-20', true)]
+  const expenses = [exp(1, 1, 3000, '2026-07-05'), exp(2, 2, 1000, '2026-08-03')]
+  it('splits money in/out by month, void excluded, newest first', () => {
+    const r = monthlyTotals(payments, expenses, JUL, AUG)
+    expect(r).toEqual([
+      { monthIdx: AUG, inAmt: 850, outAmt: 1000 },
+      { monthIdx: JUL, inAmt: 800, outAmt: 3000 }, // voided G3 payment excluded
+    ])
   })
 })
 

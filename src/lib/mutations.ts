@@ -113,6 +113,17 @@ export async function voidExpense(id: number) {
   await audit('void', 'expenses', String(id), {})
 }
 
+/** Permanently delete a mistaken entry (audited before removal). */
+export async function deletePayment(id: number) {
+  await audit('delete', 'payments', String(id), {})
+  check(await supabase.from('payments').delete().eq('id', id))
+}
+
+export async function deleteExpense(id: number) {
+  await audit('delete', 'expenses', String(id), {})
+  check(await supabase.from('expenses').delete().eq('id', id))
+}
+
 /** Upsert a global app setting. */
 export async function setSetting(key: string, value: string) {
   check(await supabase.from('app_settings').upsert({ key, value }))

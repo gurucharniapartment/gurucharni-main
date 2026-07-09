@@ -15,8 +15,9 @@ import {
   monthLabel, todayISODate, todayIST,
 } from '@/lib/dates'
 import { toCSV, downloadCSV } from '@/lib/csv'
+import { monthlyTotals } from '@/lib/reports'
 import {
-  addExpense, recordPayment, setFlatCharge, setFlatOpeningDue,
+  addExpense, deleteExpense, deletePayment, recordPayment, setFlatCharge, setFlatOpeningDue,
   setFlatType, setSetting, voidExpense, voidPayment,
 } from '@/lib/mutations'
 
@@ -335,63 +336,158 @@ function ExpenseDialog({ data, reload }: { data: AppData; reload: () => void }) 
   )
 }
 
-/* ---------------- Recent lists ---------------- */
-function RecentPayments({ data, reload }: { data: AppData; reload: () => void }) {
+/* ---------------- Summary strip ---------------- */
+function SummaryStrip({ data, computed }: { data: AppData; computed: Computed }) {
   const { t } = useI18n()
-  const rows = [...data.payments].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 10)
-  async function doVoid(id: number) {
-    if (!confirm(t('confirm_void'))) return
-    try { await voidPayment(id); reload() } catch (e) { alert(msgOf(e)) }
-  }
+  const inAmt = data.payments.filter((p) => !p.is_void).reduce((s, p) => s + p.amount, 0)
+  const outAmt = data.expenses.filter((e) => !e.is_void).reduce((s, e) => s + e.amount, 0)
+  const cells: { label: string; value: string; cls: string }[] = [
+    { label: t('available_balance'), value: formatRupees(computed.balance), cls: 'text-[var(--color-status-clear)]' },
+    { label: t('money_in'), value: formatRupees(inAmt), cls: 'text-[var(--color-status-clear)]' },
+    { label: t('money_out'), value: formatRupees(outAmt), cls: 'text-[var(--color-status-due)]' },
+    { label: t('total_dues'), value: formatRupees(computed.totalDues), cls: 'text-[var(--color-status-due)]' },
+  ]
   return (
-    <Card className="p-4">
-      <h3 className="mb-2 text-[15px] font-semibold">{t('recent_payments')}</h3>
-      {rows.length === 0 && <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_records')}</p>}
-      <div className="divide-y divide-[var(--color-border)]">
-        {rows.map((p) => (
-          <div key={p.id} className={cn('flex items-center justify-between py-2 text-[13px]', p.is_void && 'opacity-40 line-through')}>
-            <div className="min-w-0 flex-1 truncate pr-2">
-              <span className="font-medium">{p.flat_id}</span>
-              <span className="text-[var(--color-muted-foreground)]"> · {p.kind === 'due_clear' ? t('pay_clear_dues') : (p.covered_months || t('pay_maintenance'))}</span>
-            </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="tabular-nums">{formatRupees(p.amount)}</span>
-              {!p.is_void && <button onClick={() => doVoid(p.id)} className="text-[12px] text-[var(--color-destructive)]">{t('void')}</button>}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      {cells.map((c) => (
+        <Card key={c.label} className="p-3">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">{c.label}</div>
+          <div className={cn('mt-1 text-[17px] font-semibold tabular-nums display-tight', c.cls)}>{c.value}</div>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+/* ---------------- By-month table ---------------- */
+function MonthlyTable({ data, computed }: { data: AppData; computed: Computed }) {
+  const { t, lang } = useI18n()
+  const rows = monthlyTotals(data.payments, data.expenses, computed.trackingStartIdx, currentMonthIndex())
+    .filter((r) => r.inAmt > 0 || r.outAmt > 0)
+  return (
+    <Card className="mb-4 p-4">
+      <h3 className="mb-3 text-[15px] font-semibold">{t('by_month')}</h3>
+      {rows.length === 0 ? (
+        <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_records')}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--color-muted-foreground)]">
+                <th className="pb-2 font-medium">{t('month_col')}</th>
+                <th className="pb-2 text-right font-medium">{t('money_in')}</th>
+                <th className="pb-2 text-right font-medium">{t('money_out')}</th>
+                <th className="pb-2 text-right font-medium">{t('net')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-border)]">
+              {rows.map((r) => {
+                const net = r.inAmt - r.outAmt
+                return (
+                  <tr key={r.monthIdx}>
+                    <td className="whitespace-nowrap py-2 pr-3">{monthLabel(r.monthIdx, lang)}</td>
+                    <td className="py-2 text-right tabular-nums text-[var(--color-status-clear)]">{r.inAmt ? formatRupees(r.inAmt) : '—'}</td>
+                    <td className="py-2 text-right tabular-nums text-[var(--color-status-due)]">{r.outAmt ? formatRupees(r.outAmt) : '—'}</td>
+                    <td className={cn('py-2 text-right font-medium tabular-nums', net >= 0 ? 'text-[var(--color-status-clear)]' : 'text-[var(--color-status-due)]')}>
+                      {net >= 0 ? '+' : '−'}{formatRupees(Math.abs(net))}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </Card>
   )
 }
 
-function RecentExpenses({ data, reload }: { data: AppData; reload: () => void }) {
+/* ---------------- Transactions (in green / out red) with void + delete ---------------- */
+interface Txn {
+  key: string
+  kind: 'in' | 'out'
+  id: number
+  entity: 'payments' | 'expenses'
+  monthIdx: number
+  date: string
+  title: string
+  detail: string
+  amount: number
+  is_void: boolean
+}
+
+function Transactions({ data, reload }: { data: AppData; reload: () => void }) {
   const { t, lang } = useI18n()
-  const rows = [...data.expenses].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 10)
+  const [month, setMonth] = useState<string>('all')
+
   const catName = (id: number) => {
     const c = data.categories.find((x) => x.id === id)
     return c ? (lang === 'mr' ? c.name_mr : c.name_en) : ''
   }
-  async function doVoid(id: number) {
+  const payLabel = (p: typeof data.payments[number]) =>
+    p.kind === 'due_clear'
+      ? t('dues_cleared')
+      : p.covers_from && p.covers_to
+        ? `${monthLabel(monthIndex(p.covers_from), lang)}–${monthLabel(monthIndex(p.covers_to), lang)}`
+        : t('pay_maintenance')
+
+  const txns: Txn[] = [
+    ...data.payments.map((p) => ({
+      key: `p${p.id}`, kind: 'in' as const, id: p.id, entity: 'payments' as const,
+      monthIdx: monthIndex(p.payment_date), date: p.payment_date,
+      title: p.flat_id, detail: payLabel(p), amount: p.amount, is_void: p.is_void,
+    })),
+    ...data.expenses.map((e) => ({
+      key: `e${e.id}`, kind: 'out' as const, id: e.id, entity: 'expenses' as const,
+      monthIdx: monthIndex(e.expense_date), date: e.expense_date,
+      title: catName(e.category_id), detail: e.remark, amount: e.amount, is_void: e.is_void,
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date))
+
+  const months = [...new Set(txns.map((x) => x.monthIdx))].sort((a, b) => b - a)
+  const shown = month === 'all' ? txns : txns.filter((x) => String(x.monthIdx) === month)
+
+  async function doVoid(x: Txn) {
     if (!confirm(t('confirm_void'))) return
-    try { await voidExpense(id); reload() } catch (e) { alert(msgOf(e)) }
+    try { x.entity === 'payments' ? await voidPayment(x.id) : await voidExpense(x.id); reload() } catch (e) { alert(msgOf(e)) }
   }
+  async function doDelete(x: Txn) {
+    if (!confirm(t('confirm_delete'))) return
+    try { x.entity === 'payments' ? await deletePayment(x.id) : await deleteExpense(x.id); reload() } catch (e) { alert(msgOf(e)) }
+  }
+
   return (
     <Card className="p-4">
-      <h3 className="mb-2 text-[15px] font-semibold">{t('recent_expenses')}</h3>
-      {rows.length === 0 && <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_records')}</p>}
-      <div className="divide-y divide-[var(--color-border)]">
-        {rows.map((e) => (
-          <div key={e.id} className={cn('flex items-center justify-between py-2 text-[13px]', e.is_void && 'opacity-40 line-through')}>
-            <div className="min-w-0 flex-1 truncate pr-2"><span className="font-medium">{catName(e.category_id)}</span>
-              <span className="text-[var(--color-muted-foreground)]"> · {e.remark}</span></div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="tabular-nums">{formatRupees(e.amount)}</span>
-              {!e.is_void && <button onClick={() => doVoid(e.id)} className="text-[12px] text-[var(--color-destructive)]">{t('void')}</button>}
-            </div>
-          </div>
-        ))}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-[15px] font-semibold">{t('transactions')}</h3>
+        <Select className="h-8 w-auto py-0 text-[13px]" value={month} onChange={(e) => setMonth(e.target.value)}>
+          <option value="all">{t('all_months')}</option>
+          {months.map((m) => <option key={m} value={String(m)}>{monthLabel(m, lang)}</option>)}
+        </Select>
       </div>
+      {shown.length === 0 ? (
+        <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_transactions')}</p>
+      ) : (
+        <div className="divide-y divide-[var(--color-border)]">
+          {shown.map((x) => (
+            <div key={x.key} className={cn('py-2.5', x.is_void && 'opacity-40')}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className={cn('min-w-0 flex-1 truncate text-[14px] font-medium', x.is_void && 'line-through')}>{x.title}</span>
+                <span className={cn('shrink-0 text-[14px] font-semibold tabular-nums', x.kind === 'in' ? 'text-[var(--color-status-clear)]' : 'text-[var(--color-status-due)]', x.is_void && 'line-through')}>
+                  {x.kind === 'in' ? '+' : '−'}{formatRupees(x.amount)}
+                </span>
+              </div>
+              <div className="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-[var(--color-muted-foreground)]">
+                <span className="min-w-0 flex-1 truncate">{x.date} · {x.detail}</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  {!x.is_void && <button onClick={() => doVoid(x)} className="text-[var(--color-muted-foreground)] hover:underline">{t('void')}</button>}
+                  <button onClick={() => doDelete(x)} className="text-[var(--color-destructive)] hover:underline">{t('delete')}</button>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   )
 }
@@ -484,18 +580,14 @@ export function Admin() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-[17px] font-semibold tracking-tight">{t('admin')}</h2>
-          <p className="text-[13px] text-[var(--color-muted-foreground)]">
-            {t('available_balance')}: <span className="font-medium text-[var(--color-foreground)]">{formatRupees(computed.balance)}</span>
-            {' · '}{t('total_dues')}: <span className="font-medium text-[var(--color-status-due)]">{formatRupees(computed.totalDues)}</span>
-          </p>
-        </div>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="text-[17px] font-semibold tracking-tight">{t('admin')}</h2>
         <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate('/') }}>
           <LogOut className="h-4 w-4" />{t('logout')}
         </Button>
       </div>
+
+      <SummaryStrip data={data} computed={computed} />
 
       {showElecReminder && (
         <div className="mb-4 flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-status-cooldown)]/30 bg-[var(--color-status-cooldown-bg)] px-3 py-2.5 text-[13px] text-[var(--color-status-cooldown)]">
@@ -514,10 +606,8 @@ export function Admin() {
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <RecentPayments data={data} reload={reload} />
-        <RecentExpenses data={data} reload={reload} />
-      </div>
+      <MonthlyTable data={data} computed={computed} />
+      <Transactions data={data} reload={reload} />
 
       <ExportSection data={data} computed={computed} />
     </div>
