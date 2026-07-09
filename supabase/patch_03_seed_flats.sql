@@ -17,7 +17,7 @@ end $$;
 -- Opening balances before July's charge (positive = owes, negative = advance). Idempotent.
 update flats set opening_due = 0     where id in ('G1','G2','G4','G5','G6','G7','G8','G9','G13','G14');
 update flats set opening_due = 4800  where id in ('G3','G11');
-update flats set opening_due = 7233  where id = 'G12';
+update flats set opening_due = 12033 where id = 'G12';
 update flats set opening_due = -4800 where id = 'G10';
 
 -- Tag G7 and G12 as tenant-occupied (label only; charge already set above).

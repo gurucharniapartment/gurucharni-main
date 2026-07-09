@@ -25,7 +25,7 @@
 | G9   | Resi | 800     | 0                           | July pending |
 | G10  | Resi | 800     | −4,800 (advance)            | paid through 31 Dec 2026 |
 | G11  | Resi | 800     | 4,800 due                   | + July pending |
-| G12  | Tenant | 1,250 | 7,233 due                 | + July pending |
+| G12  | Tenant | 1,250 | 12,033 due                | + July pending |
 | G13  | Resi | 800     | 0                           | July pending |
 | G14  | Resi | 800     | 0                           | July pending |
 
