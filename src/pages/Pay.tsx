@@ -19,7 +19,7 @@ export function Pay() {
   const vpa = data.settings.upi_vpa || ''
   const payee = data.settings.upi_payee_name || 'Gurucharni Apartment'
 
-  const [flatId, setFlatId] = useState('G1')
+  const [flatId, setFlatId] = useState('')
   const [mode, setMode] = useState<'dues' | 'months'>('months')
   const [duePart, setDuePart] = useState<'arrears' | 'month' | 'both'>('both')
   const [months, setMonths] = useState(1)
@@ -81,11 +81,17 @@ export function Pay() {
 
       <Card className="space-y-3 p-4">
         <Field label={t('select_flat')}>
-          <Select value={flatId} onChange={(e) => setFlatId(e.target.value)}>
+          <Select className={cn(!flatId && 'glow-attn')} value={flatId} onChange={(e) => setFlatId(e.target.value)}>
+            <option value="" disabled>{t('choose_your_flat')}</option>
             {computed.flatsWithDue.map((f) => <option key={f.id} value={f.id}>{flatLabel(f, lang)}</option>)}
           </Select>
         </Field>
 
+        {!flatId && (
+          <p className="text-[13px] font-medium text-[var(--color-primary)]">{t('select_flat_first')}</p>
+        )}
+
+        {flatId && (<>
         <div className="flex justify-between text-[13px]">
           <span className="text-[var(--color-muted-foreground)]">{t('monthly_charge')}</span>
           <span className="font-medium tabular-nums">{formatRupees(charge)}</span>
@@ -129,8 +135,10 @@ export function Pay() {
             </div>
           </div>
         )}
+        </>)}
       </Card>
 
+      {flatId && (
       <Card className="mt-4 flex flex-col items-center gap-3 p-4 text-center">
         <div className="text-[13px] text-[var(--color-muted-foreground)]">
           {mode === 'dues'
@@ -150,6 +158,7 @@ export function Pay() {
           <div className="text-[13px] text-[var(--color-muted-foreground)]">{vpa ? t('all_paid') : t('upi_not_set')}</div>
         )}
       </Card>
+      )}
     </div>
   )
 }

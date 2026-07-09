@@ -19,6 +19,8 @@ const STRINGS: Dict = {
   pay_page_title: { en: 'Pay Maintenance', mr: 'देखभाल भरा' },
   how_many_months: { en: 'How many months', mr: 'किती महिने' },
   you_owe: { en: 'You currently owe', mr: 'सध्याची थकबाकी' },
+  choose_your_flat: { en: 'Choose your flat…', mr: 'तुमची सदनिका निवडा…' },
+  select_flat_first: { en: '👆 Please select your flat first', mr: '👆 कृपया आधी तुमची सदनिका निवडा' },
   pay_dues: { en: 'Pay dues', mr: 'थकबाकी भरा' },
   pay_ahead: { en: 'Pay ahead', mr: 'आगाऊ भरा' },
   pay_outstanding: { en: 'Outstanding', mr: 'थकबाकी' },

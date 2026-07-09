@@ -139,6 +139,16 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
+/* Attention glow for the "select your flat" prompt */
+@keyframes selectGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 113, 227, 0.12); }
+}
+.glow-attn {
+  animation: selectGlow 1.5s ease-in-out infinite;
+  border-color: var(--color-primary) !important;
+}
+
 /* Print: show only the .printable content (statements & receipts) */
 @media print {
   header,
