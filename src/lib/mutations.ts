@@ -79,6 +79,7 @@ export async function recordPayment(input: {
       .single(),
   )
   await audit('payment', 'payments', String(res.data!.id), input)
+  return res.data!.id as number
 }
 
 export async function addExpense(input: {

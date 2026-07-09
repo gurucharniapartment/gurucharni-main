@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ChevronLeft, Printer, MessageCircle } from 'lucide-react'
+import { ChevronLeft, Printer, MessageCircle, Share2 } from 'lucide-react'
+import { toPng } from 'html-to-image'
 import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,6 +16,8 @@ export function Receipt() {
   const { t, lang } = useI18n()
   const { data, loading } = useAppData()
   const { isAdmin, ready } = useAuth()
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [sharing, setSharing] = useState(false)
 
   const p = data.payments.find((x) => String(x.id) === id)
 
@@ -43,6 +47,31 @@ export function Receipt() {
     `${t('payment_receipt')} ${receiptNo}\n${t('app_title')}\n${t('flat')}: ${flatText}\n${t('amount_received')}: ${formatRupees(p.amount)}\n${t('for_period')}: ${period}\n${t('col_date')}: ${p.payment_date}`,
   )
 
+  // Render the receipt card to a PNG and share it (WhatsApp etc.) via the Web
+  // Share API; fall back to downloading the image where sharing isn't supported.
+  async function shareImage() {
+    const node = cardRef.current
+    if (!node) return
+    setSharing(true)
+    try {
+      const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true })
+      const blob = await (await fetch(dataUrl)).blob()
+      const file = new File([blob], `${receiptNo}.png`, { type: 'image/png' })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: t('payment_receipt'), text: `${t('payment_receipt')} ${receiptNo}` })
+      } else {
+        const a = document.createElement('a')
+        a.href = dataUrl
+        a.download = `${receiptNo}.png`
+        document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      }
+    } catch (e) {
+      if ((e as Error)?.name !== 'AbortError') console.error(e)
+    } finally {
+      setSharing(false)
+    }
+  }
+
   const Row = ({ k, v }: { k: string; v: string }) => (
     <div className="flex justify-between gap-3 py-1.5 text-[14px]">
       <span className="text-[var(--color-muted-foreground)]">{k}</span>
@@ -54,7 +83,8 @@ export function Receipt() {
     <div className="mx-auto max-w-md px-4 py-6">
       <div className="no-print mb-4 flex items-center justify-between gap-2">
         <Link to={`/flat/${p.flat_id}`}><Button variant="ghost" size="sm"><ChevronLeft className="h-4 w-4" />{t('back')}</Button></Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button size="sm" disabled={sharing} onClick={shareImage}><Share2 className="h-4 w-4" />{t('share_image')}</Button>
           <a href={`https://wa.me/?text=${waText}`} target="_blank" rel="noreferrer">
             <Button variant="secondary" size="sm"><MessageCircle className="h-4 w-4" />{t('share_whatsapp')}</Button>
           </a>
@@ -62,6 +92,7 @@ export function Receipt() {
         </div>
       </div>
 
+      <div ref={cardRef}>
       <Card className="printable p-6">
         <div className="text-center">
           <div className="text-[13px] text-[var(--color-muted-foreground)]">{t('app_title')}</div>
@@ -81,6 +112,7 @@ export function Receipt() {
         </div>
         <p className="mt-5 text-center text-[11px] text-[var(--color-muted-foreground)]">{t('computer_generated')}</p>
       </Card>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, Settings2, Plus, Wallet, Download, Landmark, Zap, MessageCircle } from 'lucide-react'
+import { LogOut, Settings2, Plus, Wallet, Download, Landmark, Zap, MessageCircle, Check, FileText, AlertTriangle } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData, type AppData, type Computed } from '@/hooks/useAppData'
@@ -175,6 +175,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [savedId, setSavedId] = useState<number | null>(null)
 
   const fwd = computed.flatsWithDue.find((f) => f.id === flatId)
   const balance = fwd?.due.balance ?? 0
@@ -197,12 +198,12 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
     try {
       if (amt <= 0) throw new Error('Enter a valid amount')
       if (kind === 'maintenance' && monthCount <= 0) throw new Error('Choose a valid month range')
-      await recordPayment({
+      const newId = await recordPayment({
         flatId, paymentDate: date, amount: amt, kind,
         coveredMonthsISO: kind === 'maintenance' ? coveredIdxs.map(monthIndexToISO) : undefined,
         note: note.trim() || undefined,
       })
-      reload(); setOpen(false); setConfirming(false); setFromM(currentMonthInput()); setToM(currentMonthInput()); setAmount(''); setNote('')
+      reload(); setConfirming(false); setSavedId(newId)
     } catch (e) { setErr(msgOf(e)) } finally { setBusy(false) }
   }
 
@@ -211,6 +212,20 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   else if (newBalance === 0) after = t('status_clear')
   else after = `${formatRupees(-newBalance)} ${t('advance_short')}`
 
+  // Warn (non-blocking) when a maintenance amount doesn't match months × charge.
+  const amountMismatch = kind === 'maintenance' && monthCount > 0 && amt > 0 && amt !== suggested
+
+  // For the post-save receipt step.
+  const savedPeriod = kind === 'due_clear'
+    ? t('pay_clear_dues')
+    : monthCount > 0
+      ? `${monthLabel(fromIdx, lang)} – ${monthLabel(toIdx, lang)}`
+      : t('pay_maintenance')
+  const receiptNo = savedId != null ? `GCA-${String(savedId).padStart(4, '0')}` : ''
+  const savedWa = encodeURIComponent(
+    `${t('payment_receipt')} ${receiptNo}\n${t('app_title')}\n${t('flat')}: ${flatName(fwd, lang)} (${flatId})\n${t('amount_received')}: ${formatRupees(amt)}\n${t('for_period')}: ${savedPeriod}\n${t('col_date')}: ${date}`,
+  )
+
   const kindBtn = (k: typeof kind, label: string) => (
     <button type="button" onClick={() => setKind(k)}
       className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all',
@@ -218,11 +233,34 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   )
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setConfirming(false) }}>
+    <Dialog open={open} onOpenChange={(o) => {
+      setOpen(o)
+      if (!o) { setConfirming(false); setSavedId(null); setFromM(currentMonthInput()); setToM(currentMonthInput()); setAmount(''); setNote('') }
+    }}>
       <DialogTrigger asChild>
         <Button size="sm"><Wallet className="h-4 w-4" />{t('record_payment')}</Button>
       </DialogTrigger>
       <DialogContent title={t('record_payment')}>
+        {savedId != null ? (
+          <div className="space-y-4">
+            <div className="flex flex-col items-center gap-2 py-2 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-status-clear-bg)]">
+                <Check className="h-6 w-6 text-[var(--color-status-clear)]" />
+              </div>
+              <div className="text-[15px] font-semibold">{t('saved')}</div>
+              <div className="text-[13px] text-[var(--color-muted-foreground)]">{flatName(fwd, lang)} · {formatRupees(amt)} · {savedPeriod}</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Link to={`/receipt/${savedId}`} onClick={() => setOpen(false)} className="w-full">
+                <Button className="w-full"><FileText className="h-4 w-4" />{t('receipt')}</Button>
+              </Link>
+              <a href={`https://wa.me/?text=${savedWa}`} target="_blank" rel="noreferrer" className="w-full">
+                <Button variant="secondary" className="w-full"><MessageCircle className="h-4 w-4" />{t('share_whatsapp')}</Button>
+              </a>
+              <DialogClose asChild><Button variant="ghost" className="w-full">{t('cancel')}</Button></DialogClose>
+            </div>
+          </div>
+        ) : (
         <div className="space-y-3">
           <div className="flex rounded-full bg-[var(--color-secondary)] p-0.5">
             {kindBtn('maintenance', t('pay_maintenance'))}
@@ -275,6 +313,13 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
             <Input value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
 
+          {amountMismatch && (
+            <div className="flex items-start gap-2 rounded-[var(--radius-md)] border border-[var(--color-status-cooldown)]/30 bg-[var(--color-status-cooldown-bg)] px-3 py-2 text-[12px] text-[var(--color-status-cooldown)]">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{t('amount_mismatch_warn')} ({monthCount} × {formatRupees(charge)} = {formatRupees(suggested)})</span>
+            </div>
+          )}
+
           <div className="rounded-[var(--radius-md)] bg-[var(--color-muted)] p-3 text-[13px]">
             <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">{t('current_balance')}</span>
               <span>{balance > 0 ? `${formatRupees(balance)} ${t('due_label')}` : `${formatRupees(-balance)} ${t('advance_short')}`}</span></div>
@@ -302,6 +347,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
             </div>
           )}
         </div>
+        )}
       </DialogContent>
     </Dialog>
   )

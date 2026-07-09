@@ -168,6 +168,8 @@ const STRINGS: Dict = {
   receipt_admin_only: { en: 'Receipts are available to the admin only.', mr: 'पावत्या फक्त प्रशासकासाठी उपलब्ध आहेत.' },
   confirm_save: { en: 'Confirm & save', mr: 'पुष्टी करून जतन करा' },
   confirm_before_save: { en: 'Please review the details and confirm.', mr: 'कृपया तपशील तपासून पुष्टी करा.' },
+  amount_mismatch_warn: { en: "Amount doesn't match the selected months", mr: 'रक्कम निवडलेल्या महिन्यांशी जुळत नाही' },
+  share_image: { en: 'Share image', mr: 'प्रतिमा पाठवा' },
   payment_receipt: { en: 'Payment Receipt', mr: 'पेमेंट पावती' },
   receipt_no: { en: 'Receipt No.', mr: 'पावती क्र.' },
   received_from: { en: 'Received from', mr: 'यांच्याकडून' },
