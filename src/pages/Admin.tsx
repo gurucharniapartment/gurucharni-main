@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { LogOut, Settings2, Plus, Wallet, Download, Landmark, Zap, MessageCircle } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/useAuth'
@@ -40,6 +40,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
   const [advMonth, setAdvMonth] = useState(currentMonthInput())
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const fwd = computed.flatsWithDue.find((f) => f.id === flatId)
   const currentType = typeForMonth(data.typeHistory, flatId, currentMonthIndex()) ?? 'residential'
@@ -80,7 +81,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
       }
       if (type !== currentType) await setFlatType(flatId, type, monthIndexToISO(currentMonthIndex()))
 
-      reload(); setOpen(false)
+      reload(); setOpen(false); setConfirming(false)
     } catch (e) { setErr(msgOf(e)) } finally { setBusy(false) }
   }
 
@@ -93,7 +94,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setConfirming(false) }}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm"><Settings2 className="h-4 w-4" />{t('flat_setup')}</Button>
       </DialogTrigger>
@@ -136,10 +137,24 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
           )}
 
           <ErrorLine msg={err} />
-          <div className="flex justify-end gap-2 pt-1">
-            <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
-            <Button size="sm" disabled={busy} onClick={save}>{busy ? t('loading') : t('save')}</Button>
-          </div>
+          {!confirming ? (
+            <div className="flex justify-end gap-2 pt-1">
+              <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
+              <Button size="sm" onClick={() => {
+                const ch = Number.parseInt(charge)
+                if (!ch || ch <= 0) { setErr('Enter a valid monthly charge'); return }
+                setErr(null); setConfirming(true)
+              }}>{t('save')}</Button>
+            </div>
+          ) : (
+            <div className="space-y-2 pt-1">
+              <p className="text-[13px] font-medium">{t('confirm_before_save')}</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setConfirming(false)}>{t('back')}</Button>
+                <Button size="sm" disabled={busy} onClick={save}>{busy ? t('loading') : t('confirm_save')}</Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -159,6 +174,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const fwd = computed.flatsWithDue.find((f) => f.id === flatId)
   const balance = fwd?.due.balance ?? 0
@@ -186,7 +202,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
         coveredMonthsISO: kind === 'maintenance' ? coveredIdxs.map(monthIndexToISO) : undefined,
         note: note.trim() || undefined,
       })
-      reload(); setOpen(false); setFromM(currentMonthInput()); setToM(currentMonthInput()); setAmount(''); setNote('')
+      reload(); setOpen(false); setConfirming(false); setFromM(currentMonthInput()); setToM(currentMonthInput()); setAmount(''); setNote('')
     } catch (e) { setErr(msgOf(e)) } finally { setBusy(false) }
   }
 
@@ -202,7 +218,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setConfirming(false) }}>
       <DialogTrigger asChild>
         <Button size="sm"><Wallet className="h-4 w-4" />{t('record_payment')}</Button>
       </DialogTrigger>
@@ -267,10 +283,24 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
           </div>
 
           <ErrorLine msg={err} />
-          <div className="flex justify-end gap-2 pt-1">
-            <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
-            <Button size="sm" disabled={busy} onClick={save}>{busy ? t('loading') : t('save')}</Button>
-          </div>
+          {!confirming ? (
+            <div className="flex justify-end gap-2 pt-1">
+              <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
+              <Button size="sm" onClick={() => {
+                if (amt <= 0) { setErr('Enter a valid amount'); return }
+                if (kind === 'maintenance' && monthCount <= 0) { setErr('Choose a valid month range'); return }
+                setErr(null); setConfirming(true)
+              }}>{t('save')}</Button>
+            </div>
+          ) : (
+            <div className="space-y-2 pt-1">
+              <p className="text-[13px] font-medium">{t('confirm_before_save')}</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setConfirming(false)}>{t('back')}</Button>
+                <Button size="sm" disabled={busy} onClick={save}>{busy ? t('loading') : t('confirm_save')}</Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -562,7 +592,7 @@ function BankBalanceDialog({ data, reload }: { data: AppData; reload: () => void
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm"><Landmark className="h-4 w-4" />{t('set_bank_balance')}</Button>
+        <Button variant="secondary" size="sm" disabled><Landmark className="h-4 w-4" />{t('set_bank_balance')}</Button>
       </DialogTrigger>
       <DialogContent title={t('bank_opening')}>
         <div className="space-y-3">
@@ -608,6 +638,44 @@ function ExportSection({ data, computed }: { data: AppData; computed: Computed }
         <Button variant="outline" size="sm" onClick={exportExpenses}><Download className="h-4 w-4" />{t('export_expenses')}</Button>
         <Button variant="outline" size="sm" onClick={exportFlats}><Download className="h-4 w-4" />{t('export_flats')}</Button>
       </div>
+    </Card>
+  )
+}
+
+/* ---------------- Receipts (same as the flat-card statement receipts) ---------------- */
+function ReceiptsList({ data }: { data: AppData }) {
+  const { t, lang } = useI18n()
+  const payments = [...data.payments].filter((p) => !p.is_void).sort((a, b) => b.payment_date.localeCompare(a.payment_date))
+  const flatOf = (id: string) => flatName(data.flats.find((f) => f.id === id), lang)
+  const periodOf = (p: typeof data.payments[number]) =>
+    p.kind === 'due_clear'
+      ? t('dues_cleared')
+      : p.covers_from && p.covers_to
+        ? `${monthLabel(monthIndex(p.covers_from), lang)}–${monthLabel(monthIndex(p.covers_to), lang)}`
+        : t('pay_maintenance')
+  return (
+    <Card className="mt-4 p-4">
+      <h3 className="mb-3 text-[15px] font-semibold">{t('receipts')}</h3>
+      {payments.length === 0 ? (
+        <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_records')}</p>
+      ) : (
+        <div className="divide-y divide-[var(--color-border)]">
+          {payments.map((p) => (
+            <Link
+              key={p.id}
+              to={`/receipt/${p.id}`}
+              className="-mx-2 flex items-center justify-between gap-2 rounded-[var(--radius-sm)] px-2 py-2.5 transition-colors hover:bg-[var(--color-accent)]"
+            >
+              <span className="min-w-0 flex-1 truncate text-[14px]">
+                <span className="font-medium">{flatOf(p.flat_id)}</span>
+                <span className="text-[var(--color-muted-foreground)]"> · {p.flat_id} · {p.payment_date} · {periodOf(p)}</span>
+              </span>
+              <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[var(--color-status-clear)]">{formatRupees(p.amount)}</span>
+              <span className="shrink-0 text-[12px] text-[var(--color-primary)]">{t('receipt')} →</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </Card>
   )
 }
@@ -731,6 +799,7 @@ export function Admin() {
 
       <MonthlyTable data={data} computed={computed} />
       <Transactions data={data} reload={reload} />
+      <ReceiptsList data={data} />
 
       <ExportSection data={data} computed={computed} />
       <AuditLog />

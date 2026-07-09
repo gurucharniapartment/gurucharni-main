@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, Printer, MessageCircle } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
+import { useAuth } from '@/hooks/useAuth'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -12,10 +13,20 @@ export function Receipt() {
   const { id = '' } = useParams()
   const { t, lang } = useI18n()
   const { data, loading } = useAppData()
+  const { isAdmin, ready } = useAuth()
 
   const p = data.payments.find((x) => String(x.id) === id)
 
-  if (loading) return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
+  if (loading || !ready) return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
+  // Receipts are admin-only — hidden from the public flat view.
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-12 text-center">
+        <p className="mb-4 text-[13px] text-[var(--color-muted-foreground)]">{t('receipt_admin_only')}</p>
+        <Link to="/"><Button variant="outline" size="sm"><ChevronLeft className="h-4 w-4" />{t('back')}</Button></Link>
+      </div>
+    )
+  }
   if (!p) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">—</div>
 
   const period =

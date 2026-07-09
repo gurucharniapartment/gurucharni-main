@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, Printer } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
+import { useAuth } from '@/hooks/useAuth'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -14,6 +15,7 @@ export function FlatStatement() {
   const { id = '' } = useParams()
   const { t, lang } = useI18n()
   const { data, computed, loading } = useAppData()
+  const { isAdmin } = useAuth()
 
   const flat = data.flats.find((f) => f.id === id)
   const fwd = computed.flatsWithDue.find((f) => f.id === id)
@@ -111,7 +113,7 @@ export function FlatStatement() {
                   <td className="whitespace-nowrap py-2 pr-2 text-[var(--color-muted-foreground)]">{e.date.slice(5)}</td>
                   <td className="py-2 pr-2">
                     <span className="block">{detailOf(e)}</span>
-                    {e.paymentId && (
+                    {isAdmin && e.paymentId && (
                       <Link to={`/receipt/${e.paymentId}`} className="no-print text-[12px] text-[var(--color-primary)]">{t('receipt')} →</Link>
                     )}
                   </td>
