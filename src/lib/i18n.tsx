@@ -21,7 +21,12 @@ const STRINGS: Dict = {
   you_owe: { en: 'You currently owe', mr: 'सध्याची थकबाकी' },
   pay_dues: { en: 'Pay dues', mr: 'थकबाकी भरा' },
   pay_ahead: { en: 'Pay ahead', mr: 'आगाऊ भरा' },
-  clearing_outstanding: { en: 'Clearing full outstanding', mr: 'संपूर्ण थकबाकी भरत आहे' },
+  pay_outstanding: { en: 'Outstanding', mr: 'थकबाकी' },
+  pay_this_month: { en: 'This month', mr: 'हा महिना' },
+  pay_both: { en: 'Both', mr: 'दोन्ही' },
+  clearing_outstanding: { en: 'Clearing outstanding dues', mr: 'थकबाकी भरत आहे' },
+  paying_this_month: { en: 'This month', mr: 'या महिन्याचा' },
+  paying_both: { en: 'Outstanding + this month', mr: 'थकबाकी + हा महिना' },
   no_payments_period: { en: 'No payments received in this period', mr: 'या कालावधीत पेमेंट मिळाले नाही' },
   upi_not_set: { en: 'UPI is not set up yet', mr: 'UPI अद्याप सेट केलेले नाही' },
   pay_via_upi: { en: 'Pay via UPI', mr: 'UPI द्वारे भरा' },
@@ -57,6 +62,9 @@ const STRINGS: Dict = {
   back: { en: 'Back', mr: 'मागे' },
 
   // Export / reminders
+  whatsapp: { en: 'WhatsApp', mr: 'व्हॉट्सअ‍ॅप' },
+  share_pending_list: { en: 'Share pending list', mr: 'थकबाकी यादी पाठवा' },
+  share_pending_hint: { en: 'Opens WhatsApp with the full list — pick your building group to post it in one tap.', mr: 'संपूर्ण यादीसह व्हॉट्सअ‍ॅप उघडते — तुमचा ग्रुप निवडून एका टॅपमध्ये पाठवा.' },
   export_csv: { en: 'Export CSV', mr: 'CSV निर्यात' },
   export_payments: { en: 'Payments', mr: 'पेमेंट' },
   export_expenses: { en: 'Expenses', mr: 'खर्च' },

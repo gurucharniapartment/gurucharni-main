@@ -21,27 +21,39 @@ export function Pay() {
 
   const [flatId, setFlatId] = useState('G1')
   const [mode, setMode] = useState<'dues' | 'months'>('months')
+  const [duePart, setDuePart] = useState<'arrears' | 'month' | 'both'>('both')
   const [months, setMonths] = useState(1)
 
   const fwd = computed.flatsWithDue.find((f) => f.id === flatId)
   const charge = fwd?.due.monthlyCharge ?? 0
   const outstanding = fwd?.due.dueAmount ?? 0
+  const arrears = fwd?.due.arrears ?? 0
+  const currentMonthDue = fwd?.due.currentMonthDue ?? 0
   const curIdx = currentMonthIndex()
+  const curMonth = monthLabel(curIdx, lang)
   // Next unpaid month = the month this flat is paid through + 1.
   // Advance/clear flats have paidThroughIdx; owing flats (null) start at the current month.
   const nextPayableIdx = (fwd?.due.paidThroughIdx ?? curIdx - 1) + 1
 
-  // Default to "pay dues" when something is owed, else "pay ahead".
-  useEffect(() => { setMode(outstanding > 0 ? 'dues' : 'months') }, [flatId]) // eslint-disable-line
+  // Default to "pay dues" when something is owed, else "pay ahead". Reset the sub-choice.
+  useEffect(() => { setMode(outstanding > 0 ? 'dues' : 'months'); setDuePart('both') }, [flatId]) // eslint-disable-line
 
   const m = Math.max(1, months)
   const toIdx = nextPayableIdx + m - 1
   const rangeLabel = m > 1 ? `${monthLabel(nextPayableIdx, lang)} – ${monthLabel(toIdx, lang)}` : monthLabel(nextPayableIdx, lang)
 
-  const amount = mode === 'dues' ? outstanding : m * charge
-  const reference = mode === 'dues'
-    ? `Gurucharni ${flatId} maintenance dues`
-    : `Gurucharni ${flatId} maintenance ${rangeLabel}`
+  // In "dues" mode: pay arrears only, this month only, or both. If there are no
+  // arrears (grace), there's only the current month to pay.
+  const effectivePart = arrears > 0 ? duePart : 'month'
+  const duesAmount = effectivePart === 'arrears' ? arrears : effectivePart === 'month' ? currentMonthDue : outstanding
+  const duesRef = effectivePart === 'arrears'
+    ? `Gurucharni ${flatId} outstanding dues`
+    : effectivePart === 'month'
+      ? `Gurucharni ${flatId} maintenance ${curMonth}`
+      : `Gurucharni ${flatId} dues + ${curMonth}`
+
+  const amount = mode === 'dues' ? duesAmount : m * charge
+  const reference = mode === 'dues' ? duesRef : `Gurucharni ${flatId} maintenance ${rangeLabel}`
   const url = buildUpiUrl({ vpa, payee, amount, note: reference })
 
   if (loading) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
@@ -50,6 +62,14 @@ export function Pay() {
     <button type="button" onClick={() => setMode(mk)}
       className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all',
         mode === mk ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{label}</button>
+  )
+  const partBtn = (p: typeof duePart, word: string, amt: number) => (
+    <button type="button" onClick={() => setDuePart(p)}
+      className={cn('flex-1 rounded-[var(--radius-md)] px-2 py-1.5 text-center transition-all',
+        effectivePart === p ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>
+      <div className="text-[12px] font-medium">{word}</div>
+      <div className="text-[11px] tabular-nums">{formatRupees(amt)}</div>
+    </button>
   )
 
   return (
@@ -84,6 +104,14 @@ export function Pay() {
           </div>
         )}
 
+        {mode === 'dues' && arrears > 0 && (
+          <div className="flex gap-1 rounded-[var(--radius-md)] bg-[var(--color-secondary)] p-1">
+            {partBtn('arrears', t('pay_outstanding'), arrears)}
+            {partBtn('month', t('pay_this_month'), currentMonthDue)}
+            {partBtn('both', t('pay_both'), outstanding)}
+          </div>
+        )}
+
         {mode === 'months' && (
           <div>
             <div className="mb-1.5 text-[13px] font-medium">{t('how_many_months')}</div>
@@ -105,7 +133,9 @@ export function Pay() {
 
       <Card className="mt-4 flex flex-col items-center gap-3 p-4 text-center">
         <div className="text-[13px] text-[var(--color-muted-foreground)]">
-          {mode === 'dues' ? t('clearing_outstanding') : `${m} × ${formatRupees(charge)} · ${rangeLabel}`}
+          {mode === 'dues'
+            ? effectivePart === 'arrears' ? t('clearing_outstanding') : effectivePart === 'month' ? `${t('paying_this_month')} · ${curMonth}` : t('paying_both')
+            : `${m} × ${formatRupees(charge)} · ${rangeLabel}`}
         </div>
         <div className="text-3xl font-semibold display-tight">{formatRupees(amount)}</div>
         {vpa && amount > 0 ? (

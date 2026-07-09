@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Settings2, Plus, Wallet, Download, Landmark, Zap } from 'lucide-react'
+import { LogOut, Settings2, Plus, Wallet, Download, Landmark, Zap, MessageCircle } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData, type AppData, type Computed } from '@/hooks/useAppData'
@@ -610,6 +610,32 @@ export function Admin() {
   const navigate = useNavigate()
   const { data, computed, reload } = useAppData()
 
+  // Build the "pending maintenance list" and open WhatsApp to post to a group.
+  function sharePendingList() {
+    const cur = currentMonthIndex()
+    const curMonth = monthLabel(cur, 'en')
+    const lines = [...computed.flatsWithDue].sort((a, b) => a.sort_order - b.sort_order).map((f) => {
+      const name = flatName(f, 'en').toUpperCase()
+      const s = f.due
+      let st: string
+      if (s.status === 'advance') st = `Advance till ${monthLabel(s.paidThroughIdx!, 'en')}`
+      else if (s.status === 'clear') st = 'Paid ✅'
+      else if (s.status === 'cooldown') st = `*${formatRupees(s.currentMonthDue)}* (${curMonth})`
+      else if (s.status === 'due') st = s.arrears > 0
+        ? `*${formatRupees(s.arrears)} overdue* + ${formatRupees(s.currentMonthDue)} (${curMonth})`
+        : `*${formatRupees(s.currentMonthDue)} overdue*`
+      else st = '—'
+      return `${f.sort_order}. ${name} = ${st}`
+    })
+    const base = window.location.href.split('#')[0]
+    const msg =
+      `*PENDING MAINTENANCE LIST*\n_as on ${todayIST().day} ${curMonth}_\n\n` +
+      lines.join('\n') +
+      `\n\nTotal pending: *${formatRupees(computed.totalDues)}*\n\n` +
+      `Pay online (choose your flat):\n${base}#/pay`
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
   // Electricity reminder: current month has no electricity bill entered.
   const elecCat = data.categories.find((c) => c.name_en === 'Electricity bill')
   const curPrefix = monthIndexToISO(currentMonthIndex()).slice(0, 7)
@@ -644,6 +670,17 @@ export function Admin() {
           <FlatSetupDialog data={data} computed={computed} reload={reload} />
           <BankBalanceDialog data={data} reload={reload} />
         </div>
+      </Card>
+
+      <Card className="mb-4 p-4">
+        <h3 className="mb-3 text-[13px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">{t('whatsapp')}</h3>
+        <button
+          onClick={sharePendingList}
+          className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-all hover:brightness-105 active:scale-[0.98]"
+        >
+          <MessageCircle className="h-4 w-4" />{t('share_pending_list')}
+        </button>
+        <p className="mt-2 text-[12px] text-[var(--color-muted-foreground)]">{t('share_pending_hint')}</p>
       </Card>
 
       <MonthlyTable data={data} computed={computed} />
