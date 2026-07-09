@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, Smartphone } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -20,23 +20,37 @@ export function Pay() {
   const payee = data.settings.upi_payee_name || 'Gurucharni Apartment'
 
   const [flatId, setFlatId] = useState('G1')
+  const [mode, setMode] = useState<'dues' | 'months'>('months')
   const [months, setMonths] = useState(1)
 
   const fwd = computed.flatsWithDue.find((f) => f.id === flatId)
   const charge = fwd?.due.monthlyCharge ?? 0
   const outstanding = fwd?.due.dueAmount ?? 0
+  const curIdx = currentMonthIndex()
+  // Next unpaid month = the month this flat is paid through + 1.
+  // Advance/clear flats have paidThroughIdx; owing flats (null) start at the current month.
+  const nextPayableIdx = (fwd?.due.paidThroughIdx ?? curIdx - 1) + 1
+
+  // Default to "pay dues" when something is owed, else "pay ahead".
+  useEffect(() => { setMode(outstanding > 0 ? 'dues' : 'months') }, [flatId]) // eslint-disable-line
 
   const m = Math.max(1, months)
-  const fromIdx = currentMonthIndex()
-  const toIdx = fromIdx + m - 1
-  const rangeLabel = m > 1 ? `${monthLabel(fromIdx, lang)} – ${monthLabel(toIdx, lang)}` : monthLabel(fromIdx, lang)
-  const amount = m * charge
-  const reference = `Gurucharni ${flatId} maintenance ${rangeLabel}`
+  const toIdx = nextPayableIdx + m - 1
+  const rangeLabel = m > 1 ? `${monthLabel(nextPayableIdx, lang)} – ${monthLabel(toIdx, lang)}` : monthLabel(nextPayableIdx, lang)
+
+  const amount = mode === 'dues' ? outstanding : m * charge
+  const reference = mode === 'dues'
+    ? `Gurucharni ${flatId} maintenance dues`
+    : `Gurucharni ${flatId} maintenance ${rangeLabel}`
   const url = buildUpiUrl({ vpa, payee, amount, note: reference })
 
-  if (loading) {
-    return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
-  }
+  if (loading) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
+
+  const modeBtn = (mk: typeof mode, label: string) => (
+    <button type="button" onClick={() => setMode(mk)}
+      className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all',
+        mode === mk ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{label}</button>
+  )
 
   return (
     <div className="mx-auto max-w-md px-4 py-6">
@@ -63,27 +77,38 @@ export function Pay() {
           </div>
         )}
 
-        <div>
-          <div className="mb-1.5 text-[13px] font-medium">{t('how_many_months')}</div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {QUICK.map((n) => (
-              <button key={n} type="button" onClick={() => setMonths(n)}
-                className={cn('rounded-full border px-3.5 py-1 text-[13px] transition-colors',
-                  m === n ? 'border-transparent bg-[var(--color-primary)] text-[var(--color-primary-foreground)]' : 'border-[var(--color-border)] text-[var(--color-muted-foreground)]')}>
-                {n}
-              </button>
-            ))}
-            <input type="number" min={1} value={months}
-              onChange={(e) => setMonths(Math.max(1, Number.parseInt(e.target.value) || 1))}
-              className="w-16 rounded-full border border-[var(--color-input)] bg-[var(--color-card)] px-3 py-1 text-center text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]" />
+        {outstanding > 0 && (
+          <div className="flex rounded-full bg-[var(--color-secondary)] p-0.5">
+            {modeBtn('dues', t('pay_dues'))}
+            {modeBtn('months', t('pay_ahead'))}
           </div>
-        </div>
+        )}
+
+        {mode === 'months' && (
+          <div>
+            <div className="mb-1.5 text-[13px] font-medium">{t('how_many_months')}</div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {QUICK.map((n) => (
+                <button key={n} type="button" onClick={() => setMonths(n)}
+                  className={cn('rounded-full border px-3.5 py-1 text-[13px] transition-colors',
+                    m === n ? 'border-transparent bg-[var(--color-primary)] text-[var(--color-primary-foreground)]' : 'border-[var(--color-border)] text-[var(--color-muted-foreground)]')}>
+                  {n}
+                </button>
+              ))}
+              <input type="number" min={1} value={months}
+                onChange={(e) => setMonths(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                className="w-16 rounded-full border border-[var(--color-input)] bg-[var(--color-card)] px-3 py-1 text-center text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]" />
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="mt-4 flex flex-col items-center gap-3 p-4 text-center">
-        <div className="text-[13px] text-[var(--color-muted-foreground)]">{m} × {formatRupees(charge)} · {rangeLabel}</div>
+        <div className="text-[13px] text-[var(--color-muted-foreground)]">
+          {mode === 'dues' ? t('clearing_outstanding') : `${m} × ${formatRupees(charge)} · ${rangeLabel}`}
+        </div>
         <div className="text-3xl font-semibold display-tight">{formatRupees(amount)}</div>
-        {vpa ? (
+        {vpa && amount > 0 ? (
           <>
             <div className="rounded-xl bg-white p-3 shadow-sm"><QRCodeSVG value={url} size={180} /></div>
             <div className="text-[13px] text-[var(--color-muted-foreground)]">{t('scan_upi')}</div>
@@ -92,7 +117,7 @@ export function Pay() {
             <a href={url} className="w-full"><Button className="w-full"><Smartphone className="h-4 w-4" />{t('open_upi_app')}</Button></a>
           </>
         ) : (
-          <div className="text-[13px] text-[var(--color-muted-foreground)]">{t('upi_not_set')}</div>
+          <div className="text-[13px] text-[var(--color-muted-foreground)]">{vpa ? t('all_paid') : t('upi_not_set')}</div>
         )}
       </Card>
     </div>

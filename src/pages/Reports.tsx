@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Field } from '@/components/ui/input'
 import { formatRupees, cn } from '@/lib/utils'
-import { currentMonthInput, monthIndexToISO } from '@/lib/dates'
+import { currentMonthInput, monthIndexToISO, monthIndex, monthLabel } from '@/lib/dates'
 import { expensesInRange, totalsByCategory, sumAmount } from '@/lib/reports'
 
 // Muted, distinct palette for the pie slices.
@@ -20,6 +20,7 @@ export function Reports() {
   const minMonth = monthIndexToISO(computed.trackingStartIdx).slice(0, 7)
 
   const [mode, setMode] = useState<'month' | 'range'>('month')
+  const [view, setView] = useState<'out' | 'in'>('out')
   const [month, setMonth] = useState(currentMonthInput())
   const [from, setFrom] = useState(minMonth)
   const [to, setTo] = useState(currentMonthInput())
@@ -31,9 +32,17 @@ export function Reports() {
 
   const periodExpenses = expensesInRange(data.expenses, fromISO, toISO)
   const spent = sumAmount(periodExpenses)
-  const collected = data.payments
+  const periodPayments = data.payments
     .filter((p) => !p.is_void && p.payment_date >= fromISO && p.payment_date <= toISO)
-    .reduce((s, p) => s + p.amount, 0)
+    .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
+  const collected = periodPayments.reduce((s, p) => s + p.amount, 0)
+
+  const payLabel = (p: (typeof periodPayments)[number]) =>
+    p.kind === 'due_clear'
+      ? t('pay_clear_dues')
+      : p.covers_from && p.covers_to
+        ? `${monthLabel(monthIndex(p.covers_from), lang)}–${monthLabel(monthIndex(p.covers_to), lang)}`
+        : t('pay_maintenance')
 
   const catName = (id: number) => {
     const c = data.categories.find((x) => x.id === id)
@@ -81,6 +90,40 @@ export function Reports() {
         </div>
       </Card>
 
+      {/* Money In / Money Out toggle */}
+      <div className="mb-4 flex rounded-full bg-[var(--color-secondary)] p-0.5">
+        <button type="button" onClick={() => setView('in')}
+          className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all', view === 'in' ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{t('money_in')}</button>
+        <button type="button" onClick={() => setView('out')}
+          className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all', view === 'out' ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{t('money_out')}</button>
+      </div>
+
+      {view === 'in' ? (
+        <Card className="p-4">
+          <h3 className="mb-2 text-[15px] font-semibold">{t('money_in')}</h3>
+          {loading ? (
+            <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+          ) : periodPayments.length === 0 ? (
+            <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_payments_period')}</p>
+          ) : (
+            <div className="divide-y divide-[var(--color-border)]">
+              {periodPayments.map((p) => (
+                <div key={p.id} className="flex items-baseline justify-between gap-2 py-2 text-[13px]">
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="font-medium">{t('flat')} {p.flat_id}</span>
+                    <span className="text-[var(--color-muted-foreground)]"> · {p.payment_date} · {payLabel(p)}</span>
+                  </span>
+                  <span className="shrink-0 font-medium tabular-nums text-[var(--color-status-clear)]">+{formatRupees(p.amount)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-2 text-[13px] font-semibold">
+                <span>{t('total')}</span>
+                <span className="tabular-nums text-[var(--color-status-clear)]">{formatRupees(collected)}</span>
+              </div>
+            </div>
+          )}
+        </Card>
+      ) : (
       <Card className="p-4">
         <h3 className="mb-2 text-[15px] font-semibold">{t('where_spent')}</h3>
         {loading ? (
@@ -127,6 +170,7 @@ export function Reports() {
           </>
         )}
       </Card>
+      )}
     </div>
   )
 }
