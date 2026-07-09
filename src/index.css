@@ -149,6 +149,51 @@ body {
   border-color: var(--color-primary) !important;
 }
 
+/* Very subtle shimmer sweep for the Pay Maintenance CTA */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.13) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  animation: shimmerSweep 4.5s ease-in-out infinite;
+}
+@keyframes shimmerSweep {
+  0% { transform: translateX(-100%); }
+  55%, 100% { transform: translateX(100%); }
+}
+
+/* One-time attention glow for overdue flat cards (fired on first scroll) */
+@keyframes dueGlow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  40% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-status-due) 45%, transparent),
+      0 0 14px 2px color-mix(in srgb, var(--color-status-due) 38%, transparent);
+  }
+}
+.glow-due {
+  border-radius: var(--radius-lg);
+  animation: dueGlow 1.5s ease-in-out 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after,
+  .glow-due {
+    animation: none;
+  }
+}
+
 /* Print: show only the .printable content (statements & receipts) */
 @media print {
   header,

@@ -50,7 +50,7 @@ function useCountUp(target: number, duration = 900): number {
   return value
 }
 
-function FlatCard({ f }: { f: FlatWithDue }) {
+function FlatCard({ f, highlight }: { f: FlatWithDue; highlight?: boolean }) {
   const { t, lang } = useI18n()
   const s = f.due
   const st = STATUS[s.status]
@@ -78,7 +78,7 @@ function FlatCard({ f }: { f: FlatWithDue }) {
   }
 
   return (
-    <Link to={`/flat/${f.id}`} className="block h-full">
+    <Link to={`/flat/${f.id}`} className={cn('block h-full', highlight && s.status === 'due' && 'glow-due')}>
       <Card
         className={cn(
           'flex h-full min-h-[104px] cursor-pointer flex-col p-3 transition-shadow duration-200 hover:shadow-[var(--shadow-hover)]',
@@ -129,6 +129,21 @@ export function Dashboard() {
   const [sort, setSort] = useState<SortKey>('flat_asc')
   const [filter, setFilter] = useState<FilterKey>('all')
   const animatedBalance = useCountUp(computed.balance)
+
+  // On the first scroll down, briefly glow the overdue flat cards, then stop.
+  const [highlightDue, setHighlightDue] = useState(false)
+  useEffect(() => {
+    let fired = false
+    const onScroll = () => {
+      if (fired || window.scrollY <= 8) return
+      fired = true
+      window.removeEventListener('scroll', onScroll)
+      setHighlightDue(true)
+      setTimeout(() => setHighlightDue(false), 5000)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   if (loading) {
     return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
@@ -185,7 +200,7 @@ export function Dashboard() {
       {/* Pay call-to-action */}
       {upiReady && (
         <Link to="/pay">
-          <div className="mb-3 flex items-center justify-between rounded-[var(--radius-lg)] bg-[var(--color-primary)] px-5 py-4 text-[var(--color-primary-foreground)] transition-transform active:scale-[0.99]">
+          <div className="shimmer mb-3 flex items-center justify-between rounded-[var(--radius-lg)] bg-[var(--color-primary)] px-5 py-4 text-[var(--color-primary-foreground)] transition-transform active:scale-[0.99]">
             <div>
               <div className="flex items-center gap-2 font-semibold"><Wallet className="h-4 w-4" />{t('pay_cta')}</div>
               <div className="mt-0.5 text-[12px] opacity-80">{t('pay_cta_desc')}</div>
@@ -229,7 +244,7 @@ export function Dashboard() {
         <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_flats_match')}</p>
       ) : (
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
-          {sorted.map((f) => <FlatCard key={f.id} f={f} />)}
+          {sorted.map((f) => <FlatCard key={f.id} f={f} highlight={highlightDue} />)}
         </div>
       )}
 
