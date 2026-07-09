@@ -153,20 +153,20 @@ create policy audit_insert on audit_log for insert to authenticated with check (
 -- ============================================================
 -- 14 flats, all residential to start. Admin re-types the 2-3 tenant flats later.
 insert into flats (id, label_en, label_mr, sort_order) values
-  ('G1','Gurucharni 1','गुरुचरणी १',1),
-  ('G2','Gurucharni 2','गुरुचरणी २',2),
-  ('G3','Gurucharni 3','गुरुचरणी ३',3),
-  ('G4','Gurucharni 4','गुरुचरणी ४',4),
-  ('G5','Gurucharni 5','गुरुचरणी ५',5),
-  ('G6','Gurucharni 6','गुरुचरणी ६',6),
-  ('G7','Gurucharni 7','गुरुचरणी ७',7),
-  ('G8','Gurucharni 8','गुरुचरणी ८',8),
-  ('G9','Gurucharni 9','गुरुचरणी ९',9),
-  ('G10','Gurucharni 10','गुरुचरणी १०',10),
-  ('G11','Gurucharni 11','गुरुचरणी ११',11),
-  ('G12','Gurucharni 12','गुरुचरणी १२',12),
-  ('G13','Gurucharni 13','गुरुचरणी १३',13),
-  ('G14','Gurucharni 14','गुरुचरणी १४',14)
+  ('G1','Samant','सामंत',1),
+  ('G2','Bhake','भाके',2),
+  ('G3','Date','दाते',3),
+  ('G4','Yeola','येवला',4),
+  ('G5','Hanmante','हनमंते',5),
+  ('G6','Karad','कराड',6),
+  ('G7','Bhamare','भामरे',7),
+  ('G8','Shaikh','शेख',8),
+  ('G9','Nikam','निकम',9),
+  ('G10','Shinde','शिंदे',10),
+  ('G11','Joshi','जोशी',11),
+  ('G12','Chandratre','चंद्रात्रे',12),
+  ('G13','Wagh','वाघ',13),
+  ('G14','Ghule','घुले',14)
 on conflict (id) do nothing;
 
 -- Every flat starts residential, effective far in the past so it always applies.

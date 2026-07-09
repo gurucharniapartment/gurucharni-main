@@ -7,7 +7,7 @@ import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, Field } from '@/components/ui/input'
-import { formatRupees, cn } from '@/lib/utils'
+import { formatRupees, cn, flatLabel } from '@/lib/utils'
 import { currentMonthIndex, monthLabel } from '@/lib/dates'
 import { buildUpiUrl } from '@/lib/upi'
 
@@ -62,7 +62,7 @@ export function Pay() {
       <Card className="space-y-3 p-4">
         <Field label={t('select_flat')}>
           <Select value={flatId} onChange={(e) => setFlatId(e.target.value)}>
-            {computed.flatsWithDue.map((f) => <option key={f.id} value={f.id}>{f.id}</option>)}
+            {computed.flatsWithDue.map((f) => <option key={f.id} value={f.id}>{flatLabel(f, lang)}</option>)}
           </Select>
         </Field>
 

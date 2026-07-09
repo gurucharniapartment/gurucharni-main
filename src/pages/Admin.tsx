@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogTrigger, DialogContent, DialogClose } from '@/components/ui/dialog'
 import { Input, Select, Field } from '@/components/ui/input'
-import { formatRupees, cn } from '@/lib/utils'
+import { formatRupees, cn, flatName, flatLabel } from '@/lib/utils'
 import { typeForMonth } from '@/lib/calc'
 import {
   currentMonthIndex, currentMonthInput, monthIndex, monthIndexToISO, monthInputToISO,
@@ -29,7 +29,7 @@ const msgOf = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 /* ---------------- Flat setup ---------------- */
 function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: Computed; reload: () => void }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [open, setOpen] = useState(false)
   const [flatId, setFlatId] = useState('G1')
   const [charge, setCharge] = useState('800')
@@ -101,7 +101,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
           <div className="grid grid-cols-2 gap-2">
             <Field label={t('select_flat')}>
               <Select value={flatId} onChange={(e) => setFlatId(e.target.value)}>
-                {data.flats.map((f) => <option key={f.id} value={f.id}>{f.id}</option>)}
+                {data.flats.map((f) => <option key={f.id} value={f.id}>{flatLabel(f, lang)}</option>)}
               </Select>
             </Field>
             <Field label={t('monthly_charge')}>
@@ -215,7 +215,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
           <Field label={t('select_flat')}>
             <Select value={flatId} onChange={(e) => setFlatId(e.target.value)}>
               {computed.flatsWithDue.map((f) => (
-                <option key={f.id} value={f.id}>{f.id} — {formatRupees(f.due.dueAmount)} {t('due_label')}</option>
+                <option key={f.id} value={f.id}>{flatLabel(f, lang)} — {formatRupees(f.due.dueAmount)} {t('due_label')}</option>
               ))}
             </Select>
           </Field>
@@ -436,7 +436,7 @@ function Transactions({ data, reload }: { data: AppData; reload: () => void }) {
     ...data.payments.map((p) => ({
       key: `p${p.id}`, kind: 'in' as const, id: p.id, entity: 'payments' as const,
       monthIdx: monthIndex(p.payment_date), date: p.payment_date,
-      title: p.flat_id, detail: payLabel(p), amount: p.amount, is_void: p.is_void,
+      title: flatName(data.flats.find((f) => f.id === p.flat_id), lang), detail: `${p.flat_id} · ${payLabel(p)}`, amount: p.amount, is_void: p.is_void,
     })),
     ...data.expenses.map((e) => ({
       key: `e${e.id}`, kind: 'out' as const, id: e.id, entity: 'expenses' as const,
@@ -541,17 +541,18 @@ function ExportSection({ data, computed }: { data: AppData; computed: Computed }
     const c = data.categories.find((x) => x.id === id)
     return c ? (lang === 'mr' ? c.name_mr : c.name_en) : ''
   }
+  const nameOf = (id: string) => flatName(data.flats.find((f) => f.id === id), lang)
   const exportPayments = () => downloadCSV('payments.csv', toCSV(
-    ['Flat', 'Date', 'Kind', 'Months', 'Amount', 'Note', 'Status'],
-    data.payments.map((p) => [p.flat_id, p.payment_date, p.kind, p.covered_months ?? '', p.amount, p.note ?? '', p.is_void ? 'VOID' : 'ok']),
+    ['Flat', 'Name', 'Date', 'Kind', 'Months', 'Amount', 'Note', 'Status'],
+    data.payments.map((p) => [p.flat_id, nameOf(p.flat_id), p.payment_date, p.kind, p.covered_months ?? '', p.amount, p.note ?? '', p.is_void ? 'VOID' : 'ok']),
   ))
   const exportExpenses = () => downloadCSV('expenses.csv', toCSV(
     ['Date', 'Category', 'Amount', 'Remark', 'Auto', 'Status'],
     data.expenses.map((e) => [e.expense_date, catName(e.category_id), e.amount, e.remark, e.is_auto ? 'auto' : '', e.is_void ? 'VOID' : 'ok']),
   ))
   const exportFlats = () => downloadCSV('flats.csv', toCSV(
-    ['Flat', 'Monthly charge', 'Status', 'Due', 'Advance'],
-    computed.flatsWithDue.map((f) => [f.id, f.due.monthlyCharge, f.due.status, f.due.dueAmount, f.due.advanceAmount]),
+    ['Flat', 'Name', 'Monthly charge', 'Status', 'Due', 'Advance'],
+    computed.flatsWithDue.map((f) => [f.id, flatName(f, lang), f.due.monthlyCharge, f.due.status, f.due.dueAmount, f.due.advanceAmount]),
   ))
   return (
     <Card className="mt-4 p-4">

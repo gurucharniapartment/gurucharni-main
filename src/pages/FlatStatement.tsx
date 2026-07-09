@@ -4,7 +4,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { formatRupees, cn } from '@/lib/utils'
+import { formatRupees, cn, flatName } from '@/lib/utils'
 import { currentMonthIndex, monthLabel, monthIndex } from '@/lib/dates'
 import { typeForMonth } from '@/lib/calc'
 import { buildFlatLedger } from '@/lib/ledger'
@@ -64,9 +64,9 @@ export function FlatStatement() {
         <div className="mb-1 text-[13px] text-[var(--color-muted-foreground)]">{t('app_title')}</div>
         <h2 className="text-[20px] font-semibold tracking-tight">{t('account_statement')}</h2>
         <div className="mt-3 border-b border-[var(--color-border)] pb-4">
-          <div className="flex items-center justify-between text-[13px]">
-            <span className="text-[15px] font-semibold">{t('flat')} {flat.id}</span>
-            <span className="text-[var(--color-muted-foreground)]">{t(type)} · {formatRupees(s.monthlyCharge)}/mo</span>
+          <div>
+            <div className="text-[17px] font-semibold tracking-tight">{flatName(flat, lang)}</div>
+            <div className="text-[12px] text-[var(--color-muted-foreground)]">{t('flat')} {flat.id} · {t(type)} · {formatRupees(s.monthlyCharge)}/mo</div>
           </div>
 
           <div className={cn('mt-2 text-[19px] font-bold', meta.cls)}>{meta.label}</div>

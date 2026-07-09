@@ -7,7 +7,7 @@ import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Field } from '@/components/ui/input'
-import { formatRupees, cn } from '@/lib/utils'
+import { formatRupees, cn, flatName } from '@/lib/utils'
 import { currentMonthInput, monthIndexToISO, monthIndex, monthLabel } from '@/lib/dates'
 import { expensesInRange, totalsByCategory, sumAmount } from '@/lib/reports'
 
@@ -110,8 +110,8 @@ export function Reports() {
               {periodPayments.map((p) => (
                 <div key={p.id} className="flex items-baseline justify-between gap-2 py-2 text-[13px]">
                   <span className="min-w-0 flex-1 truncate">
-                    <span className="font-medium">{t('flat')} {p.flat_id}</span>
-                    <span className="text-[var(--color-muted-foreground)]"> · {p.payment_date} · {payLabel(p)}</span>
+                    <span className="font-medium">{flatName(data.flats.find((f) => f.id === p.flat_id), lang)}</span>
+                    <span className="text-[var(--color-muted-foreground)]"> · {p.flat_id} · {p.payment_date} · {payLabel(p)}</span>
                   </span>
                   <span className="shrink-0 font-medium tabular-nums text-[var(--color-status-clear)]">+{formatRupees(p.amount)}</span>
                 </div>

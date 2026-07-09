@@ -6,7 +6,7 @@ import { useAppData, type FlatWithDue } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/input'
-import { formatRupees, cn } from '@/lib/utils'
+import { formatRupees, cn, flatName } from '@/lib/utils'
 import { monthLabel, todayIST } from '@/lib/dates'
 import type { FlatStatus } from '@/lib/calc'
 
@@ -65,15 +65,17 @@ function FlatCard({ f }: { f: FlatWithDue }) {
       )}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={cn('h-2 w-2 rounded-full', st.dot)} />
-          <span className="text-[15px] font-semibold tracking-tight">{f.id}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={cn('h-2 w-2 shrink-0 rounded-full', st.dot)} />
+          <span className="truncate text-[14px] font-semibold tracking-tight">{flatName(f, lang)}</span>
         </div>
-        <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', st.chip)}>
+        <span className={cn('ml-2 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium', st.chip)}>
           {t(`status_${s.status}`)}
         </span>
       </div>
-      <div className="mt-2 text-[12px] leading-tight">{detail}</div>
+      <div className="mt-1.5 text-[12px] leading-tight">
+        <span className="text-[var(--color-muted-foreground)]">{f.id}</span> · {detail}
+      </div>
     </Card>
     </Link>
   )

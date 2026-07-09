@@ -4,7 +4,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { formatRupees } from '@/lib/utils'
+import { formatRupees, flatName } from '@/lib/utils'
 import { monthLabel, monthIndex } from '@/lib/dates'
 
 export function Receipt() {
@@ -25,8 +25,10 @@ export function Receipt() {
         : t('pay_maintenance')
 
   const receiptNo = `GCA-${String(p.id).padStart(4, '0')}`
+  const flat = data.flats.find((f) => f.id === p.flat_id)
+  const flatText = `${flatName(flat, lang)} (${p.flat_id})`
   const waText = encodeURIComponent(
-    `${t('payment_receipt')} ${receiptNo}\n${t('app_title')}\n${t('flat')} ${p.flat_id}\n${t('amount_received')}: ${formatRupees(p.amount)}\n${t('for_period')}: ${period}\n${t('col_date')}: ${p.payment_date}`,
+    `${t('payment_receipt')} ${receiptNo}\n${t('app_title')}\n${t('flat')}: ${flatText}\n${t('amount_received')}: ${formatRupees(p.amount)}\n${t('for_period')}: ${period}\n${t('col_date')}: ${p.payment_date}`,
   )
 
   const Row = ({ k, v }: { k: string; v: string }) => (
@@ -60,7 +62,7 @@ export function Receipt() {
         <div className="divide-y divide-[var(--color-border)]">
           <Row k={t('receipt_no')} v={receiptNo} />
           <Row k={t('col_date')} v={p.payment_date} />
-          <Row k={t('received_from')} v={`${t('flat')} ${p.flat_id}`} />
+          <Row k={t('received_from')} v={flatText} />
           <Row k={t('for_period')} v={period} />
           {data.settings.upi_vpa ? <Row k="UPI" v={data.settings.upi_vpa} /> : null}
           {p.note ? <Row k={t('note')} v={p.note} /> : null}
