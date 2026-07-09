@@ -4,6 +4,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, flatName } from '@/lib/utils'
 import { currentMonthIndex, monthLabel } from '@/lib/dates'
 
@@ -42,7 +43,7 @@ export function Dues() {
 
       <Card className="p-4">
         {loading ? (
-          <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+          <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
         ) : rows.length === 0 ? (
           <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('nobody_owes')}</p>
         ) : (
@@ -86,7 +87,7 @@ export function Dues() {
       <h3 className="mb-3 mt-6 text-[15px] font-semibold tracking-tight">{t('cleared_title')}</h3>
       <Card className="p-4">
         {loading ? (
-          <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+          <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
         ) : clearedRows.length === 0 ? (
           <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_cleared')}</p>
         ) : (

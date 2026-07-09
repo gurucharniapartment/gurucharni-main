@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogTrigger, DialogContent, DialogClose } from '@/components/ui/dialog'
 import { Input, Select, Field } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, cn, flatName, flatLabel } from '@/lib/utils'
 import { typeForMonth } from '@/lib/calc'
 import {
@@ -422,6 +423,10 @@ interface Txn {
 function Transactions({ data, reload }: { data: AppData; reload: () => void }) {
   const { t, lang } = useI18n()
   const [month, setMonth] = useState<string>('all')
+  const [pendingDel, setPendingDel] = useState<Txn | null>(null)
+  const [delText, setDelText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [delErr, setDelErr] = useState<string | null>(null)
 
   const catName = (id: number) => {
     const c = data.categories.find((x) => x.id === id)
@@ -454,9 +459,14 @@ function Transactions({ data, reload }: { data: AppData; reload: () => void }) {
     if (!confirm(t('confirm_void'))) return
     try { x.entity === 'payments' ? await voidPayment(x.id) : await voidExpense(x.id); reload() } catch (e) { alert(msgOf(e)) }
   }
-  async function doDelete(x: Txn) {
-    if (!confirm(t('confirm_delete'))) return
-    try { x.entity === 'payments' ? await deletePayment(x.id) : await deleteExpense(x.id); reload() } catch (e) { alert(msgOf(e)) }
+  function askDelete(x: Txn) { setPendingDel(x); setDelText(''); setDelErr(null) }
+  async function confirmDelete() {
+    if (!pendingDel) return
+    setDeleting(true); setDelErr(null)
+    try {
+      pendingDel.entity === 'payments' ? await deletePayment(pendingDel.id) : await deleteExpense(pendingDel.id)
+      setPendingDel(null); reload()
+    } catch (e) { setDelErr(msgOf(e)) } finally { setDeleting(false) }
   }
 
   return (
@@ -484,13 +494,47 @@ function Transactions({ data, reload }: { data: AppData; reload: () => void }) {
                 <span className="min-w-0 flex-1 truncate">{x.date} · {x.detail}</span>
                 <span className="flex shrink-0 items-center gap-3">
                   {!x.is_void && <button onClick={() => doVoid(x)} className="text-[var(--color-muted-foreground)] hover:underline">{t('void')}</button>}
-                  <button onClick={() => doDelete(x)} className="text-[var(--color-destructive)] hover:underline">{t('delete')}</button>
+                  <button onClick={() => askDelete(x)} className="text-[var(--color-destructive)] hover:underline">{t('delete')}</button>
                 </span>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Safety layer: permanent delete requires typing "yes". */}
+      <Dialog open={!!pendingDel} onOpenChange={(o) => { if (!o) setPendingDel(null) }}>
+        <DialogContent title={t('delete')}>
+          <div className="space-y-3">
+            <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('confirm_delete')}</p>
+            {pendingDel && (
+              <div className="rounded-[var(--radius-md)] bg-[var(--color-muted)] p-3 text-[13px]">
+                <div className="flex justify-between gap-2">
+                  <span className="min-w-0 truncate font-medium">{pendingDel.title}</span>
+                  <span className={cn('shrink-0 tabular-nums', pendingDel.kind === 'in' ? 'text-[var(--color-status-clear)]' : 'text-[var(--color-status-due)]')}>
+                    {pendingDel.kind === 'in' ? '+' : '−'}{formatRupees(pendingDel.amount)}
+                  </span>
+                </div>
+                <div className="mt-0.5 text-[12px] text-[var(--color-muted-foreground)]">{pendingDel.date} · {pendingDel.detail}</div>
+              </div>
+            )}
+            <Field label={t('type_yes_to_delete')}>
+              <Input value={delText} onChange={(e) => setDelText(e.target.value)} placeholder="yes" autoFocus />
+            </Field>
+            <ErrorLine msg={delErr} />
+            <div className="flex justify-end gap-2 pt-1">
+              <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
+              <Button
+                variant="destructive" size="sm"
+                disabled={deleting || delText.trim().toLowerCase() !== 'yes'}
+                onClick={confirmDelete}
+              >
+                {deleting ? t('loading') : t('delete')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
@@ -586,7 +630,7 @@ function AuditLog() {
     <Card className="mt-4 p-4">
       <h3 className="mb-3 text-[15px] font-semibold">{t('activity_log')}</h3>
       {loading ? (
-        <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+        <div className="flex py-1 text-[var(--color-muted-foreground)]"><Spinner size={18} /></div>
       ) : rows.length === 0 ? (
         <p className="text-[13px] text-[var(--color-muted-foreground)]">{t('no_records')}</p>
       ) : (

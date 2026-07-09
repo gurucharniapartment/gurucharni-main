@@ -141,6 +141,7 @@ const STRINGS: Dict = {
   dues_cleared: { en: 'Dues cleared', mr: 'थकबाकी भरली' },
   delete: { en: 'Delete', mr: 'हटवा' },
   confirm_delete: { en: 'Permanently delete this entry? This cannot be undone.', mr: 'ही नोंद कायमची हटवायची? हे पूर्ववत करता येणार नाही.' },
+  type_yes_to_delete: { en: 'Type "yes" to confirm deletion', mr: 'हटवण्यासाठी "yes" टाइप करा' },
   no_transactions: { en: 'No transactions yet', mr: 'अद्याप व्यवहार नाहीत' },
   void: { en: 'Void', mr: 'रद्द' },
   voided: { en: 'Voided', mr: 'रद्द केले' },

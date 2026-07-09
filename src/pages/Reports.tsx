@@ -7,6 +7,7 @@ import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Field } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, cn, flatName } from '@/lib/utils'
 import { currentMonthInput, monthIndexToISO, monthIndex, monthLabel } from '@/lib/dates'
 import { expensesInRange, totalsByCategory, sumAmount } from '@/lib/reports'
@@ -103,7 +104,7 @@ export function Reports() {
         <Card className="p-4">
           <h3 className="mb-2 text-[15px] font-semibold">{t('money_in')}</h3>
           {loading ? (
-            <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+            <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
           ) : periodPayments.length === 0 ? (
             <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_payments_period')}</p>
           ) : (

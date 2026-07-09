@@ -7,6 +7,7 @@ import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, Field } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, cn, flatLabel } from '@/lib/utils'
 import { currentMonthIndex, monthLabel } from '@/lib/dates'
 import { buildUpiUrl } from '@/lib/upi'
@@ -56,7 +57,7 @@ export function Pay() {
   const reference = mode === 'dues' ? duesRef : `Gurucharni ${flatId} maintenance ${rangeLabel}`
   const url = buildUpiUrl({ vpa, payee, amount, note: reference })
 
-  if (loading) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
+  if (loading) return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
 
   const modeBtn = (mk: typeof mode, label: string) => (
     <button type="button" onClick={() => setMode(mk)}

@@ -4,6 +4,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, flatName } from '@/lib/utils'
 import { monthLabel, monthIndex } from '@/lib/dates'
 
@@ -14,7 +15,7 @@ export function Receipt() {
 
   const p = data.payments.find((x) => String(x.id) === id)
 
-  if (loading) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
+  if (loading) return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
   if (!p) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">—</div>
 
   const period =

@@ -4,6 +4,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, cn, flatName } from '@/lib/utils'
 import { currentMonthIndex, monthLabel, monthIndex } from '@/lib/dates'
 import { typeForMonth } from '@/lib/calc'
@@ -18,7 +19,7 @@ export function FlatStatement() {
   const fwd = computed.flatsWithDue.find((f) => f.id === id)
   const curIdx = currentMonthIndex()
 
-  if (loading) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
+  if (loading) return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
   if (!flat || !fwd) return <div className="py-24 text-center text-[var(--color-muted-foreground)]">—</div>
 
   const type = typeForMonth(data.typeHistory, id, curIdx) ?? 'residential'

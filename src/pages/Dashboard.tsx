@@ -6,6 +6,7 @@ import { useAppData, type FlatWithDue } from '@/hooks/useAppData'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { formatRupees, cn, flatName } from '@/lib/utils'
 import { monthLabel, todayIST } from '@/lib/dates'
 import type { FlatStatus } from '@/lib/calc'
@@ -130,7 +131,7 @@ export function Dashboard() {
   const animatedBalance = useCountUp(computed.balance)
 
   if (loading) {
-    return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
+    return <div className="flex justify-center py-24 text-[var(--color-muted-foreground)]"><Spinner /></div>
   }
   if (error) {
     return (
