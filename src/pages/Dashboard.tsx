@@ -64,42 +64,36 @@ function FlatCard({ f }: { f: FlatWithDue }) {
         st.edge,
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={cn('h-2 w-2 shrink-0 rounded-full', st.dot)} />
-          <span className="truncate text-[14px] font-semibold tracking-tight">{flatName(f, lang)}</span>
+      <div className="flex items-start gap-2.5">
+        <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold', st.chip)}>
+          {f.sort_order}
         </div>
-        <span className={cn('ml-2 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium', st.chip)}>
-          {t(`status_${s.status}`)}
-        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-semibold leading-tight tracking-tight break-words">{flatName(f, lang)}</div>
+          <div className="text-[11px] text-[var(--color-muted-foreground)]">{f.id}</div>
+          <span className={cn('mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium', st.chip)}>
+            {t(`status_${s.status}`)}
+          </span>
+        </div>
       </div>
-      <div className="mt-1.5 text-[12px] leading-tight">
-        <span className="text-[var(--color-muted-foreground)]">{f.id}</span> · {detail}
-      </div>
+      <div className="mt-2.5 text-[12px] leading-tight">{detail}</div>
     </Card>
     </Link>
   )
 }
 
-function Stat({ label, value, accent, dotted }: { label: string; value: string; accent?: boolean; dotted?: boolean }) {
-  return (
-    <div
-      className="flex-1 px-4 py-3.5 text-center"
-      style={dotted ? { outline: '1.5px dashed var(--color-status-due)', outlineOffset: '-6px', borderRadius: '10px' } : undefined}
-    >
-      <div className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
-        {label}
-      </div>
-      <div
-        className={cn(
-          'mt-1 text-[17px] font-semibold display-tight tabular-nums',
-          accent && 'text-[var(--color-status-due)]',
-        )}
-      >
-        {value}
-      </div>
-    </div>
+function Stat({ label, value, accent, dotted, to }: { label: string; value: string; accent?: boolean; dotted?: boolean; to?: string }) {
+  const inner = (
+    <>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">{label}</div>
+      <div className={cn('mt-1 text-[17px] font-semibold display-tight tabular-nums', accent && 'text-[var(--color-status-due)]')}>{value}</div>
+    </>
   )
+  const style = dotted ? { outline: '1.5px dashed var(--color-status-due)', outlineOffset: '-6px', borderRadius: '10px' } : undefined
+  const cls = cn('flex-1 px-4 py-3.5 text-center', to && 'cursor-pointer transition-colors hover:bg-[var(--color-accent)]')
+  return to
+    ? <Link to={to} className={cls} style={style}>{inner}</Link>
+    : <div className={cls} style={style}>{inner}</div>
 }
 
 const FILTER_MATCH: Record<FilterKey, (s: FlatStatus) => boolean> = {
@@ -163,9 +157,9 @@ export function Dashboard() {
           </div>
         </div>
         <div className="flex divide-x divide-[var(--color-border)]">
-          <Stat label={t('total_collected')} value={formatRupees(computed.totalCollected)} />
-          <Stat label={t('total_spent')} value={formatRupees(computed.totalSpent)} />
-          <Stat label={t('total_dues')} value={formatRupees(computed.totalDues)} accent={computed.totalDues > 0} dotted />
+          <Stat label={t('total_collected')} value={formatRupees(computed.totalCollected)} to="/reports?view=in" />
+          <Stat label={t('total_spent')} value={formatRupees(computed.totalSpent)} to="/reports?view=out" />
+          <Stat label={t('total_dues')} value={formatRupees(computed.totalDues)} accent={computed.totalDues > 0} dotted to="/dues" />
         </div>
       </Card>
       <p className="mb-6 px-1 text-[11px] text-[var(--color-muted-foreground)]">{t('totals_note')}</p>

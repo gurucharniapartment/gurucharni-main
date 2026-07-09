@@ -175,6 +175,9 @@ const STRINGS: Dict = {
   paid_up_to: { en: 'Paid up to', mr: 'यापर्यंत भरले' },
   pay_by_10th: { en: 'Please pay by the 10th', mr: 'कृपया १० तारखेपर्यंत भरा' },
   last_payment: { en: 'Last payment', mr: 'शेवटचे पेमेंट' },
+  col_name: { en: 'Name', mr: 'नाव' },
+  nobody_owes: { en: 'No flats have outstanding dues 🎉', mr: 'कोणत्याही सदनिकेची थकबाकी नाही 🎉' },
+  who_owes: { en: 'Who has dues', mr: 'कोणाची थकबाकी' },
 
   loading: { en: 'Loading…', mr: 'लोड होत आहे…' },
   error_loading: { en: 'Could not load data. Check your connection.', mr: 'डेटा लोड करता आला नाही. कनेक्शन तपासा.' },

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useI18n } from '@/lib/i18n'
@@ -19,8 +19,9 @@ export function Reports() {
   const { data, computed, loading } = useAppData()
   const minMonth = monthIndexToISO(computed.trackingStartIdx).slice(0, 7)
 
+  const [searchParams] = useSearchParams()
   const [mode, setMode] = useState<'month' | 'range'>('month')
-  const [view, setView] = useState<'out' | 'in'>('out')
+  const [view, setView] = useState<'out' | 'in'>(searchParams.get('view') === 'in' ? 'in' : 'out')
   const [month, setMonth] = useState(currentMonthInput())
   const [from, setFrom] = useState(minMonth)
   const [to, setTo] = useState(currentMonthInput())

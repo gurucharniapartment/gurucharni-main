@@ -5,6 +5,7 @@ import { Reports } from '@/pages/Reports'
 import { Pay } from '@/pages/Pay'
 import { FlatStatement } from '@/pages/FlatStatement'
 import { Receipt } from '@/pages/Receipt'
+import { Dues } from '@/pages/Dues'
 import { Login } from '@/pages/Login'
 import { Admin } from '@/pages/Admin'
 import { useAuth } from '@/hooks/useAuth'
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/pay" element={<Pay />} />
+          <Route path="/dues" element={<Dues />} />
           <Route path="/flat/:id" element={<FlatStatement />} />
           <Route path="/receipt/:id" element={<Receipt />} />
           <Route path="/login" element={isAdmin ? <Navigate to="/admin" replace /> : <Login />} />
