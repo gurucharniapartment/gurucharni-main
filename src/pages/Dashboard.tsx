@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertCircle, RefreshCw, BarChart3, ChevronRight, Wallet } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
@@ -22,6 +22,32 @@ const STATUS: Record<FlatStatus, { chip: string; text: string }> = {
 }
 
 const ORDER: Record<FlatStatus, number> = { due: 0, cooldown: 1, clear: 2, advance: 2, unconfigured: 3 }
+
+/** Animate a number from 0 up to `target` on mount / whenever the target changes. */
+function useCountUp(target: number, duration = 900): number {
+  const [value, setValue] = useState(0)
+  const startRef = useRef<number | null>(null)
+  useEffect(() => {
+    // Respect users who prefer reduced motion — jump straight to the value.
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setValue(target)
+      return
+    }
+    let raf = 0
+    startRef.current = null
+    const tick = (now: number) => {
+      if (startRef.current == null) startRef.current = now
+      const t = Math.min(1, (now - startRef.current) / duration)
+      const eased = 1 - Math.pow(1 - t, 3) // easeOutCubic
+      setValue(target * eased)
+      if (t < 1) raf = requestAnimationFrame(tick)
+      else setValue(target)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration])
+  return value
+}
 
 function FlatCard({ f }: { f: FlatWithDue }) {
   const { t, lang } = useI18n()
@@ -101,6 +127,7 @@ export function Dashboard() {
   const upiReady = !!data.settings.upi_vpa
   const [sort, setSort] = useState<SortKey>('flat_asc')
   const [filter, setFilter] = useState<FilterKey>('all')
+  const animatedBalance = useCountUp(computed.balance)
 
   if (loading) {
     return <div className="py-24 text-center text-[var(--color-muted-foreground)]">{t('loading')}</div>
@@ -133,16 +160,16 @@ export function Dashboard() {
       {/* Summary card — coloured bank header + white stats */}
       <Card className="mb-3 overflow-hidden">
         <div
-          className="px-5 pt-5 pb-5 text-white"
-          style={{ background: 'linear-gradient(135deg, #0f5132 0%, #1a7a4c 100%)' }}
+          className="px-5 pt-5 pb-5"
+          style={{ background: 'linear-gradient(135deg, #0b1a12 0%, #000000 100%)' }}
         >
-          <div className="text-[11px] font-medium uppercase tracking-wide opacity-85">
+          <div className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#4cd07d', opacity: 0.85 }}>
             {t('available_balance')}
           </div>
-          <div className="mt-1.5 text-[44px] font-semibold leading-none display-tight">
-            {formatRupees(computed.balance)}
+          <div className="mt-1.5 text-[44px] font-semibold leading-none display-tight tabular-nums" style={{ color: '#4cd07d' }}>
+            {formatRupees(animatedBalance)}
           </div>
-          <div className="mt-2 text-[12px] opacity-85">
+          <div className="mt-2 text-[12px]" style={{ color: 'rgba(255, 255, 255, 0.72)' }}>
             {t('in_bank_note')} · {t('as_of')} {today.day} {monthLabel(today.year * 12 + today.month - 1, lang)}
           </div>
         </div>
