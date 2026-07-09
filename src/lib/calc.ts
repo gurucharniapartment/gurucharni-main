@@ -38,7 +38,9 @@ export type FlatStatus = 'clear' | 'advance' | 'cooldown' | 'due' | 'unconfigure
 export interface DueResult {
   status: FlatStatus
   balance: number // signed: + owes, − credit
-  dueAmount: number // max(balance, 0)
+  dueAmount: number // max(balance, 0) = arrears + currentMonthDue
+  arrears: number // owed from BEFORE the current month (excludes this month's charge)
+  currentMonthDue: number // unpaid portion of the current month's charge
   advanceAmount: number // max(−balance, 0)
   paidThroughIdx: number | null // month index paid through (clear/advance)
   monthlyCharge: number // charge effective for the current month
@@ -87,6 +89,8 @@ export function computeDue(
       status: 'unconfigured',
       balance: 0,
       dueAmount: 0,
+      arrears: 0,
+      currentMonthDue: 0,
       advanceAmount: 0,
       paidThroughIdx: null,
       monthlyCharge: 0,
@@ -109,21 +113,26 @@ export function computeDue(
       status: advanceAmount === 0 ? 'clear' : 'advance',
       balance,
       dueAmount: 0,
+      arrears: 0,
+      currentMonthDue: 0,
       advanceAmount,
       paidThroughIdx: currentMonthIdx + monthsAhead,
       monthlyCharge: currentCharge,
     }
   }
 
-  // Owes money. Cooldown = only the current month's charge remains AND within grace.
-  const balanceExcludingCurrent = balance - currentCharge
-  const status: FlatStatus =
-    balanceExcludingCurrent <= 0 && todayDay <= cooldownDays ? 'cooldown' : 'due'
+  // Owes money. Split into arrears (before this month) + this month's unpaid charge.
+  const currentMonthDue = Math.min(balance, currentCharge)
+  const arrears = balance - currentMonthDue
+  // Cooldown = only the current month's charge remains AND within grace.
+  const status: FlatStatus = arrears <= 0 && todayDay <= cooldownDays ? 'cooldown' : 'due'
 
   return {
     status,
     balance,
     dueAmount: balance,
+    arrears,
+    currentMonthDue,
     advanceAmount: 0,
     paidThroughIdx: null,
     monthlyCharge: currentCharge,

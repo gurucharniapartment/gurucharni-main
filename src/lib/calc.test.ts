@@ -35,6 +35,18 @@ describe('real building — as of 9 July (grace window)', () => {
     const r = due('G3', 4800, 0, 9)
     expect(r.dueAmount).toBe(5600)
     expect(r.status).toBe('due')
+    expect(r.arrears).toBe(4800) // owed before this month
+    expect(r.currentMonthDue).toBe(800) // this month's charge, separate
+  })
+  it('G12 tenant splits arrears 7,233 + this-month 1,250', () => {
+    const r = due('G12', 7233, 0, 9)
+    expect(r.arrears).toBe(7233)
+    expect(r.currentMonthDue).toBe(1250)
+  })
+  it('grace flat has zero arrears (only this month owed)', () => {
+    const r = due('G4', 0, 0, 9)
+    expect(r.arrears).toBe(0)
+    expect(r.currentMonthDue).toBe(800)
   })
   it('G4 nil + July → cooldown ₹800', () => {
     expect(due('G4', 0, 0, 9)).toMatchObject({ dueAmount: 800, status: 'cooldown' })

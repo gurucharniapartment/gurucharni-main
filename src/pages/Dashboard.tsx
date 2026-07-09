@@ -42,7 +42,12 @@ function FlatCard({ f }: { f: FlatWithDue }) {
       </span>
     )
   } else if (s.status === 'due') {
-    detail = (
+    detail = s.arrears > 0 ? (
+      <span className="font-medium text-[var(--color-status-due)]">
+        {formatRupees(s.arrears)} {t('due_label')}
+        <span className="font-normal text-[var(--color-muted-foreground)]"> + {formatRupees(s.currentMonthDue)} {t('this_month_charge').toLowerCase()}</span>
+      </span>
+    ) : (
       <span className="font-medium text-[var(--color-status-due)]">
         {formatRupees(s.dueAmount)} {t('due_label')}
       </span>

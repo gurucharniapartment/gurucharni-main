@@ -26,9 +26,24 @@ export function FlatStatement() {
     flatId: id, openingDue: flat.opening_due, charges: data.charges,
     payments: data.payments, trackingStartIdx: computed.trackingStartIdx, currentMonthIdx: curIdx,
   })
-  const bal = fwd.due.balance
-  const statusText = bal > 0 ? `${t('owes_now')}: ${formatRupees(bal)}` : bal < 0 ? `${t('in_advance')}: ${formatRupees(-bal)}` : t('all_paid')
-  const statusCls = bal > 0 ? 'text-[var(--color-status-due)]' : 'text-[var(--color-status-clear)]'
+  const s = fwd.due
+  const STATUS_META: Record<string, { label: string; cls: string }> = {
+    advance: { label: t('st_advance'), cls: 'text-[var(--color-status-clear)]' },
+    clear: { label: t('st_paid_up'), cls: 'text-[var(--color-status-clear)]' },
+    cooldown: { label: t('st_grace'), cls: 'text-[var(--color-status-cooldown)]' },
+    due: { label: t('st_overdue'), cls: 'text-[var(--color-status-due)]' },
+    unconfigured: { label: t('status_unconfigured'), cls: 'text-[var(--color-muted-foreground)]' },
+  }
+  const meta = STATUS_META[s.status]
+  const lastPayment = [...data.payments]
+    .filter((p) => p.flat_id === id && !p.is_void)
+    .sort((a, b) => b.payment_date.localeCompare(a.payment_date))[0]
+  const Fact = ({ k, v, strong }: { k: string; v: string; strong?: boolean }) => (
+    <div className="flex justify-between gap-3">
+      <span className="text-[var(--color-muted-foreground)]">{k}</span>
+      <span className={cn('text-right', strong && 'font-bold')}>{v}</span>
+    </div>
+  )
 
   const detailOf = (e: (typeof ledger)[number]) => {
     if (e.type === 'opening') return t('opening_balance_row')
@@ -48,12 +63,35 @@ export function FlatStatement() {
       <Card className="printable p-5">
         <div className="mb-1 text-[13px] text-[var(--color-muted-foreground)]">{t('app_title')}</div>
         <h2 className="text-[20px] font-semibold tracking-tight">{t('account_statement')}</h2>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] pb-3 text-[13px]">
-          <div>
+        <div className="mt-3 border-b border-[var(--color-border)] pb-4">
+          <div className="flex items-center justify-between text-[13px]">
             <span className="text-[15px] font-semibold">{t('flat')} {flat.id}</span>
-            <span className="ml-2 text-[var(--color-muted-foreground)]">{t(type)} · {formatRupees(fwd.due.monthlyCharge)}/mo</span>
+            <span className="text-[var(--color-muted-foreground)]">{t(type)} · {formatRupees(s.monthlyCharge)}/mo</span>
           </div>
-          <div className={cn('font-semibold', statusCls)}>{statusText}</div>
+
+          <div className={cn('mt-2 text-[19px] font-bold', meta.cls)}>{meta.label}</div>
+
+          <div className="mt-2 space-y-1 text-[13px]">
+            {(s.status === 'advance' || s.status === 'clear') && s.paidThroughIdx != null && (
+              <Fact k={s.status === 'advance' ? t('paid_advance_through') : t('paid_up_to')} v={monthLabel(s.paidThroughIdx, lang)} strong />
+            )}
+            {s.status === 'due' && (
+              <>
+                {s.arrears > 0 && <Fact k={t('outstanding_before')} v={formatRupees(s.arrears)} strong />}
+                <Fact k={`${t('this_month_charge')} (${monthLabel(curIdx, lang)})`} v={formatRupees(s.currentMonthDue)} strong />
+                <Fact k={t('total_now')} v={formatRupees(s.dueAmount)} />
+              </>
+            )}
+            {s.status === 'cooldown' && (
+              <>
+                <Fact k={`${t('this_month_charge')} (${monthLabel(curIdx, lang)})`} v={formatRupees(s.currentMonthDue)} strong />
+                <div className="text-[var(--color-status-cooldown)]">{t('pay_by_10th')}</div>
+              </>
+            )}
+            {lastPayment && (
+              <Fact k={t('last_payment')} v={`${lastPayment.payment_date} · ${formatRupees(lastPayment.amount)}`} />
+            )}
+          </div>
         </div>
 
         <div className="mt-3 overflow-x-auto">
