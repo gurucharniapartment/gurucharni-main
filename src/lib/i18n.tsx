@@ -190,7 +190,7 @@ const STRINGS: Dict = {
   total_now: { en: 'Total now', mr: 'सध्या एकूण' },
   paid_advance_through: { en: 'Paid in advance through', mr: 'आधीच भरले यापर्यंत' },
   paid_up_to: { en: 'Paid up to', mr: 'यापर्यंत भरले' },
-  pay_by_10th: { en: 'Please pay by the 10th', mr: 'कृपया १० तारखेपर्यंत भरा' },
+  pay_by_10th: { en: 'Please pay soon to stay clear', mr: 'कृपया लवकर भरा' },
   last_payment: { en: 'Last payment', mr: 'शेवटचे पेमेंट' },
   col_name: { en: 'Name', mr: 'नाव' },
   nobody_owes: { en: 'No flats have outstanding dues', mr: 'कोणत्याही सदनिकेची थकबाकी नाही' },

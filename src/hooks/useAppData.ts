@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { computeDue, type DueResult } from '@/lib/calc'
-import { currentMonthIndex, monthIndex, todayIST } from '@/lib/dates'
+import { currentMonthIndex, makeMonthIndex, monthIndex, todayIST } from '@/lib/dates'
 import type {
   AppSetting, Expense, ExpenseCategory, Flat, FlatCharge, FlatTypeHistory,
   Payment, Rate, RecurringExpense,
@@ -46,6 +46,10 @@ export function computeAggregates(data: AppData): Computed {
   const day = todayIST().day
   const trackingStartIdx = monthIndex(data.settings.tracking_start_month || DEFAULT_TRACKING_START)
 
+  // One-time: July 2026 (launch month) grace runs to the 15th. Every other
+  // month uses the standard 10-day cooldown.
+  const cooldownDays = monthIdx === makeMonthIndex(2026, 7) ? 15 : 10
+
   const totalCollected = data.payments.filter((p) => !p.is_void).reduce((s, p) => s + p.amount, 0)
   const totalSpent = data.expenses.filter((e) => !e.is_void).reduce((s, e) => s + e.amount, 0)
   const openingFund = Number.parseInt(data.settings.opening_fund_balance || '0') || 0
@@ -64,7 +68,7 @@ export function computeAggregates(data: AppData): Computed {
       return {
         ...f,
         paidTotal,
-        due: computeDue(f.id, f.opening_due, paidTotal, data.charges, trackingStartIdx, monthIdx, day),
+        due: computeDue(f.id, f.opening_due, paidTotal, data.charges, trackingStartIdx, monthIdx, day, cooldownDays),
       }
     })
 
