@@ -147,9 +147,9 @@ export function Reports() {
       <div ref={cardRef}>
       {view === 'in' ? (
         <Card className="p-4">
-          <div className="mb-2 flex items-baseline justify-between gap-2">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <h3 className="text-[15px] font-semibold">{t('money_in')}</h3>
-            <span className="text-[12px] font-medium text-[var(--color-muted-foreground)]">{periodLabel} · {formatRupees(collected)}</span>
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-[var(--color-foreground)] px-3 py-1 text-[12px] font-bold tabular-nums text-[var(--color-card)]">{periodLabel} · {formatRupees(collected)}</span>
           </div>
           {loading ? (
             <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
@@ -175,9 +175,9 @@ export function Reports() {
         </Card>
       ) : (
       <Card className="p-4">
-        <div className="mb-2 flex items-baseline justify-between gap-2">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-[15px] font-semibold">{t('where_spent')}</h3>
-          <span className="text-[12px] font-medium text-[var(--color-muted-foreground)]">{periodLabel} · {formatRupees(spent)}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-[var(--color-foreground)] px-3 py-1 text-[12px] font-bold tabular-nums text-[var(--color-card)]">{periodLabel} · {formatRupees(spent)}</span>
         </div>
         {loading ? (
           <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
@@ -185,45 +185,59 @@ export function Reports() {
           <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_expenses_period')}</p>
         ) : (
           <>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2}>
-                    {pieData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v) => formatRupees(Number(v))} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-2 space-y-1.5">
-              {pieData.map((d, i) => (
-                <div key={d.name} className="flex items-center justify-between text-[13px]">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} />
-                    {d.name}
-                  </span>
-                  <span className="tabular-nums">{formatRupees(d.value)}</span>
-                </div>
-              ))}
+            {/* Small pie on the left, legend on the right — compact. */}
+            <div className="flex items-center gap-4">
+              <div className="h-36 w-36 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={34} outerRadius={60} paddingAngle={2}>
+                      {pieData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v) => formatRupees(Number(v))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                {pieData.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between gap-2 text-[13px]">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} />
+                      <span className="truncate">{d.name}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums">{formatRupees(d.value)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
+            {/* Expense detail as a fitted, non-overflowing table. */}
             <div className="mt-4 border-t border-[var(--color-border)] pt-3">
-              <div className="space-y-1">
-                {[...periodExpenses].sort((a, b) => a.expense_date.localeCompare(b.expense_date)).map((e) => {
-                  const cat = catName(e.category_id)
-                  return (
-                    <div key={e.id} className="flex items-center justify-between text-[12px]">
-                      <span className="min-w-0 truncate">
-                        <span className="text-[var(--color-muted-foreground)]">{e.expense_date}</span> · {cat}
-                        {e.remark && e.remark !== cat && (
-                          <span className="text-[var(--color-muted-foreground)]"> · {e.remark}</span>
-                        )}
-                      </span>
-                      <span className="shrink-0 tabular-nums">{formatRupees(e.amount)}</span>
-                    </div>
-                  )
-                })}
-              </div>
+              <table className="w-full table-fixed text-[12px]">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--color-muted-foreground)]">
+                    <th className="w-24 pb-1 pr-2 font-medium">{t('col_date')}</th>
+                    <th className="pb-1 pr-2 font-medium">{t('category')}</th>
+                    <th className="w-20 pb-1 text-right font-medium">{t('amount')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  {[...periodExpenses].sort((a, b) => a.expense_date.localeCompare(b.expense_date)).map((e) => {
+                    const cat = catName(e.category_id)
+                    return (
+                      <tr key={e.id} className="align-top">
+                        <td className="whitespace-nowrap py-1.5 pr-2 tabular-nums text-[var(--color-muted-foreground)]">{e.expense_date}</td>
+                        <td className="py-1.5 pr-2">
+                          <div className="break-words">{cat}</div>
+                          {e.remark && e.remark !== cat && (
+                            <div className="break-words text-[11px] text-[var(--color-muted-foreground)]">{e.remark}</div>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap py-1.5 text-right tabular-nums">{formatRupees(e.amount)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </>
         )}
