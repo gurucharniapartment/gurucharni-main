@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { ChevronLeft, Printer } from 'lucide-react'
+import { ChevronLeft, Printer, Wallet } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
 import { useAuth } from '@/hooks/useAuth'
@@ -30,6 +30,7 @@ export function FlatStatement() {
     payments: data.payments, trackingStartIdx: computed.trackingStartIdx, currentMonthIdx: curIdx,
   })
   const s = fwd.due
+  const curMonthLabel = monthLabel(curIdx, lang)
   const STATUS_META: Record<string, { label: string; cls: string }> = {
     advance: { label: t('st_advance'), cls: 'text-[var(--color-status-clear)]' },
     clear: { label: t('st_paid_up'), cls: 'text-[var(--color-status-clear)]' },
@@ -82,29 +83,60 @@ export function FlatStatement() {
             <span className="text-[17px] font-bold tabular-nums">{formatRupees(s.monthlyCharge * 6)}</span>
           </div>
 
-          <div className={cn('mt-3 text-[19px] font-bold', meta.cls)}>{meta.label}</div>
+          {/* Status summary — colour-coded box: red = overdue, blue = this month
+              pending, green = paid / paid-ahead. */}
+          {(() => {
+            const pending = s.status === 'due' || s.status === 'cooldown'
+            const tone =
+              s.status === 'due'
+                ? 'border-[var(--color-status-due)]/30 bg-[var(--color-status-due-bg)] text-[var(--color-status-due)]'
+                : s.status === 'cooldown'
+                  ? 'border-[var(--color-status-cooldown)]/30 bg-[var(--color-status-cooldown-bg)] text-[var(--color-status-cooldown)]'
+                  : s.status === 'advance' || s.status === 'clear'
+                    ? 'border-[var(--color-status-clear)]/30 bg-[var(--color-status-clear-bg)] text-[var(--color-status-clear)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-muted)] text-[var(--color-muted-foreground)]'
+            return (
+              <div className={cn('mt-3 rounded-[var(--radius-lg)] border p-4', tone)}>
+                <div className="text-[18px] font-bold">{meta.label}</div>
 
-          <div className="mt-2 space-y-1 text-[13px]">
-            {(s.status === 'advance' || s.status === 'clear') && s.paidThroughIdx != null && (
-              <Fact k={s.status === 'advance' ? t('paid_advance_through') : t('paid_up_to')} v={monthLabel(s.paidThroughIdx, lang)} strong />
-            )}
-            {s.status === 'due' && (
-              <>
-                {s.arrears > 0 && <Fact k={t('outstanding_before')} v={formatRupees(s.arrears)} strong />}
-                <Fact k={`${t('this_month_charge')} (${monthLabel(curIdx, lang)})`} v={formatRupees(s.currentMonthDue)} strong />
-                <Fact k={t('total_now')} v={formatRupees(s.dueAmount)} />
-              </>
-            )}
-            {s.status === 'cooldown' && (
-              <>
-                <Fact k={`${t('this_month_charge')} (${monthLabel(curIdx, lang)})`} v={formatRupees(s.currentMonthDue)} strong />
-                <div className="text-[var(--color-status-cooldown)]">{t('pay_by_10th')}</div>
-              </>
-            )}
-            {lastPayment && (
-              <Fact k={t('last_payment')} v={`${lastPayment.payment_date} · ${formatRupees(lastPayment.amount)}`} />
-            )}
-          </div>
+                {s.status === 'due' && (
+                  <div className="mt-2 space-y-1 text-[13px] text-[var(--color-foreground)]">
+                    {s.arrears > 0 && (
+                      <Fact k={`${t('pay_outstanding')} (${t('before_month')} ${curMonthLabel})`} v={formatRupees(s.arrears)} strong />
+                    )}
+                    <Fact k={`${curMonthLabel} (${t('this_month_charge')})`} v={formatRupees(s.currentMonthDue)} strong />
+                    <div className="mt-1 border-t border-[var(--color-border)] pt-1">
+                      <Fact k={t('total_now')} v={formatRupees(s.dueAmount)} strong />
+                    </div>
+                  </div>
+                )}
+
+                {s.status === 'cooldown' && (
+                  <div className="mt-2 space-y-1 text-[13px] text-[var(--color-foreground)]">
+                    <Fact k={`${curMonthLabel} (${t('this_month_charge')})`} v={formatRupees(s.currentMonthDue)} strong />
+                  </div>
+                )}
+
+                {(s.status === 'advance' || s.status === 'clear') && s.paidThroughIdx != null && (
+                  <div className="mt-1 text-[13px] font-medium">
+                    {s.status === 'advance' ? t('paid_advance_through') : t('paid_up_to')} {monthLabel(s.paidThroughIdx, lang)}
+                  </div>
+                )}
+
+                {pending && (
+                  <Link to={`/pay?flat=${flat.id}`} className="no-print mt-3 block">
+                    <Button className="w-full"><Wallet className="h-4 w-4" />{t('pay_cta')}</Button>
+                  </Link>
+                )}
+              </div>
+            )
+          })()}
+
+          {lastPayment && (
+            <div className="mt-2 text-[12px] text-[var(--color-muted-foreground)]">
+              {t('last_payment')}: {lastPayment.payment_date} · {formatRupees(lastPayment.amount)}
+            </div>
+          )}
         </div>
 
         <div className="mt-3 overflow-x-auto">
@@ -128,13 +160,20 @@ export function FlatStatement() {
                     )}
                   </td>
                   <td className={cn('whitespace-nowrap py-2 pr-2 text-right tabular-nums', e.credit ? 'text-[var(--color-status-clear)]' : 'text-[var(--color-foreground)]')}>
-                    {e.credit ? `−${formatRupees(e.credit)}` : `+${formatRupees(e.debit)}`}
+                    {e.credit ? formatRupees(e.credit) : formatRupees(e.debit)}
                   </td>
-                  <td className={cn('whitespace-nowrap py-2 text-right font-medium tabular-nums', e.balance > 0 ? 'text-[var(--color-status-due)]' : 'text-[var(--color-foreground)]')}>{formatRupees(e.balance)}</td>
+                  <td className={cn('whitespace-nowrap py-2 text-right font-medium tabular-nums',
+                    e.balance > 0 ? 'text-[var(--color-status-due)]' : e.balance < 0 ? 'text-[var(--color-status-clear)]' : 'text-[var(--color-foreground)]')}>
+                    {formatRupees(Math.abs(e.balance))}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--color-muted-foreground)]">
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[var(--color-status-clear)]" />{t('col_paid')}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[var(--color-status-due)]" />{t('due_label')}</span>
         </div>
         <p className="mt-4 text-[11px] text-[var(--color-muted-foreground)]">{t('computer_generated')}</p>
       </Card>

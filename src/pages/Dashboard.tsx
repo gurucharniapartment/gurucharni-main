@@ -70,7 +70,7 @@ function FlatCard({ f, highlight }: { f: FlatWithDue; highlight?: boolean }) {
   } else if (s.status === 'due') {
     primary = formatRupees(s.arrears > 0 ? s.arrears : s.currentMonthDue)
     secondary = s.arrears > 0
-      ? `+ ${formatRupees(s.currentMonthDue)} ${t('this_month_charge').toLowerCase()}`
+      ? `${t('this_month_charge')} ${formatRupees(s.currentMonthDue)}`
       : t('st_overdue')
   } else {
     primary = '—'

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, Smartphone } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
@@ -20,7 +20,8 @@ export function Pay() {
   const vpa = data.settings.upi_vpa || ''
   const payee = data.settings.upi_payee_name || 'Gurucharni Apartment'
 
-  const [flatId, setFlatId] = useState('')
+  const [searchParams] = useSearchParams()
+  const [flatId, setFlatId] = useState(searchParams.get('flat') || '')
   const [mode, setMode] = useState<'dues' | 'months'>('months')
   const [duePart, setDuePart] = useState<'arrears' | 'month' | 'both'>('both')
   const [months, setMonths] = useState(1)
