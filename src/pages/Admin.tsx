@@ -365,18 +365,32 @@ function ExpenseDialog({ data, reload }: { data: AppData; reload: () => void }) 
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // Water tanker is the only category allowed a ₹0 amount (a free tanker).
+  const isWaterTanker = cats.find((c) => c.id === categoryId)?.name_en === 'Water tanker'
+
   // Watchman salary is fixed ₹2,500 — pre-fill (still editable) when selected.
   useEffect(() => {
     if (cats.find((c) => c.id === categoryId)?.name_en === 'Watchman salary') setAmount('2500')
   }, [categoryId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Water tanker at ₹0 = a free tanker; auto-label the remark, and clear that
+  // auto-label again if a real amount is entered.
+  useEffect(() => {
+    if (!isWaterTanker) return
+    const n = Number.parseInt(amount) || 0
+    if (amount.trim() !== '' && n === 0) setRemark('Free tanker')
+    else if (n > 0) setRemark((r) => (r === 'Free tanker' ? '' : r))
+  }, [amount, isWaterTanker]) // eslint-disable-line react-hooks/exhaustive-deps
+
   async function save() {
     setBusy(true); setErr(null)
     try {
-      const amt = Number.parseInt(amount)
-      if (!amt || amt <= 0) throw new Error('Enter a valid amount')
-      if (!remark.trim()) throw new Error('Remark is required')
-      await addExpense({ categoryId: categoryId || cats[0]?.id, expenseDate: date, amount: amt, remark: remark.trim() })
+      const amt = Number.parseInt(amount) || 0
+      // Water tanker may be ₹0 (free); every other category needs a positive amount.
+      if (isWaterTanker ? amt < 0 : amt <= 0) throw new Error('Enter a valid amount')
+      const finalRemark = isWaterTanker && amt === 0 ? remark.trim() || 'Free tanker' : remark.trim()
+      if (!finalRemark) throw new Error('Remark is required')
+      await addExpense({ categoryId: categoryId || cats[0]?.id, expenseDate: date, amount: amt, remark: finalRemark })
       reload(); setOpen(false); setAmount(''); setRemark('')
     } catch (e) { setErr(msgOf(e)) } finally { setBusy(false) }
   }
@@ -395,13 +409,16 @@ function ExpenseDialog({ data, reload }: { data: AppData; reload: () => void }) 
           </Field>
           <div className="grid grid-cols-2 gap-2">
             <Field label={t('amount')}>
-              <Input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Input type="number" min={isWaterTanker ? 0 : 1} value={amount} onChange={(e) => setAmount(e.target.value)} />
             </Field>
             <Field label={t('date')}>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>
           <p className="text-[11px] text-[var(--color-muted-foreground)]">{t('date_format_note')}</p>
+          {isWaterTanker && (
+            <p className="text-[11px] text-[var(--color-muted-foreground)]">{t('free_tanker_hint')}</p>
+          )}
           <Field label={t('remark')}>
             <Input value={remark} onChange={(e) => setRemark(e.target.value)} />
           </Field>

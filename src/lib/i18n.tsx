@@ -155,6 +155,7 @@ const STRINGS: Dict = {
   // Statement / receipt / audit
   account_statement: { en: 'Account Statement', mr: 'खाते उतारा' },
   monthly_maintenance: { en: 'Monthly maintenance', mr: 'मासिक देखभाल' },
+  free_tanker_hint: { en: 'Enter 0 for a free tanker — the remark becomes "Free tanker".', mr: 'मोफत टँकरसाठी 0 भरा — शेरा "Free tanker" होईल.' },
   six_month_maintenance: { en: '6-month maintenance', mr: '६ महिन्यांची देखभाल' },
   opening_balance_row: { en: 'Opening balance', mr: 'प्रारंभिक शिल्लक' },
   maintenance_charge: { en: 'Maintenance', mr: 'देखभाल शुल्क' },
