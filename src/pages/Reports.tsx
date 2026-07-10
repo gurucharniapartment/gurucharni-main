@@ -156,34 +156,36 @@ export function Reports() {
           ) : periodPayments.length === 0 ? (
             <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_payments_period')}</p>
           ) : (
-            <table className="w-full table-fixed text-[12px]">
-              <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--color-muted-foreground)]">
-                  <th className="w-[88px] pb-1 pr-2 font-medium">{t('col_date')}</th>
-                  <th className="pb-1 pr-2 font-medium">{t('col_name')}</th>
-                  <th className="w-[44px] pb-1 pr-2 font-medium">{t('flat')}</th>
-                  <th className="pb-1 pr-2 font-medium">{t('covers')}</th>
-                  <th className="w-[76px] pb-1 text-right font-medium">{t('amount')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
-                {periodPayments.map((p) => (
-                  <tr key={p.id}>
-                    <td className="whitespace-nowrap py-1.5 pr-2 tabular-nums text-[var(--color-muted-foreground)]">{p.payment_date}</td>
-                    <td className="truncate py-1.5 pr-2 font-medium">{flatName(data.flats.find((f) => f.id === p.flat_id), lang)}</td>
-                    <td className="whitespace-nowrap py-1.5 pr-2 text-[var(--color-muted-foreground)]">{p.flat_id}</td>
-                    <td className="truncate py-1.5 pr-2 text-[var(--color-muted-foreground)]">{payLabel(p)}</td>
-                    <td className="whitespace-nowrap py-1.5 text-right tabular-nums text-[var(--color-status-clear)]">{formatRupees(p.amount)}</td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-[12px]">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--color-muted-foreground)]">
+                    <th className="whitespace-nowrap pb-1 pr-3 font-medium">{t('col_date')}</th>
+                    <th className="whitespace-nowrap pb-1 pr-3 font-medium">{t('col_name')}</th>
+                    <th className="whitespace-nowrap pb-1 pr-3 font-medium">{t('flat')}</th>
+                    <th className="whitespace-nowrap pb-1 pr-3 font-medium">{t('covers')}</th>
+                    <th className="whitespace-nowrap pb-1 text-right font-medium">{t('amount')}</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-[var(--color-border)] font-semibold">
-                  <td className="py-1.5 pr-2" colSpan={4}>{t('total')}</td>
-                  <td className="py-1.5 text-right tabular-nums text-[var(--color-status-clear)]">{formatRupees(collected)}</td>
-                </tr>
-              </tfoot>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  {periodPayments.map((p) => (
+                    <tr key={p.id}>
+                      <td className="whitespace-nowrap py-1.5 pr-3 tabular-nums text-[var(--color-muted-foreground)]">{p.payment_date}</td>
+                      <td className="whitespace-nowrap py-1.5 pr-3 font-medium">{flatName(data.flats.find((f) => f.id === p.flat_id), lang)}</td>
+                      <td className="whitespace-nowrap py-1.5 pr-3 text-[var(--color-muted-foreground)]">{p.flat_id}</td>
+                      <td className="whitespace-nowrap py-1.5 pr-3 text-[var(--color-muted-foreground)]">{payLabel(p)}</td>
+                      <td className="whitespace-nowrap py-1.5 text-right tabular-nums text-[var(--color-status-clear)]">{formatRupees(p.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-[var(--color-border)] font-semibold">
+                    <td className="whitespace-nowrap py-1.5 pr-3" colSpan={4}>{t('total')}</td>
+                    <td className="whitespace-nowrap py-1.5 text-right tabular-nums text-[var(--color-status-clear)]">{formatRupees(collected)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           )}
         </Card>
       ) : (
