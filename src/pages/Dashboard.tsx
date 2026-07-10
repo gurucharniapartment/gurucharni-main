@@ -171,6 +171,10 @@ export function Dashboard() {
 
   const selectCls = 'h-8 text-[13px] py-0'
 
+  const overdueCount = computed.flatsWithDue.filter((f) => f.due.status === 'due').length
+  const graceCount = computed.flatsWithDue.filter((f) => f.due.status === 'cooldown').length
+  const advanceCount = computed.flatsWithDue.filter((f) => f.due.status === 'advance').length
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       {/* Summary card — coloured bank header + white stats */}
@@ -212,7 +216,7 @@ export function Dashboard() {
 
       {/* Reports call-to-action — black card, same radius as the bank card */}
       <Link to="/reports">
-        <div className="mb-6 flex items-center justify-between rounded-[var(--radius-lg)] bg-[var(--color-foreground)] px-5 py-4 text-[var(--color-background)] transition-transform active:scale-[0.99]">
+        <div className="mb-3 flex items-center justify-between rounded-[var(--radius-lg)] bg-[var(--color-foreground)] px-5 py-4 text-[var(--color-background)] transition-transform active:scale-[0.99]">
           <div>
             <div className="flex items-center gap-2 font-semibold"><BarChart3 className="h-4 w-4" />{t('monthly_report')}</div>
             <div className="mt-0.5 text-[12px] opacity-70">{t('reports_cta_desc')}</div>
@@ -220,6 +224,22 @@ export function Dashboard() {
           <ChevronRight className="h-5 w-5 opacity-70" />
         </div>
       </Link>
+
+      {/* At-a-glance status counts — overdue / current-month / advance */}
+      <div className="mb-6 grid grid-cols-3 gap-2.5">
+        <div className="rounded-[var(--radius-lg)] bg-[var(--color-status-due-bg)] p-3 text-center">
+          <div className="text-[26px] font-bold leading-none display-tight text-[var(--color-status-due)]">{overdueCount}</div>
+          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-status-due)]">{t('st_overdue')}</div>
+        </div>
+        <div className="rounded-[var(--radius-lg)] bg-[var(--color-status-cooldown-bg)] p-3 text-center">
+          <div className="text-[26px] font-bold leading-none display-tight text-[var(--color-status-cooldown)]">{graceCount}</div>
+          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-status-cooldown)]">{t('grace_short')}</div>
+        </div>
+        <div className="rounded-[var(--radius-lg)] bg-[var(--color-status-clear-bg)] p-3 text-center">
+          <div className="text-[26px] font-bold leading-none display-tight text-[var(--color-status-clear)]">{advanceCount}</div>
+          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-status-clear)]">{t('status_advance')}</div>
+        </div>
+      </div>
 
       <h2 className="mb-3 text-[17px] font-semibold tracking-tight">{t('flats')}</h2>
 

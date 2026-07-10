@@ -46,6 +46,7 @@ const STRINGS: Dict = {
   filter_all: { en: 'All', mr: 'सर्व' },
   filter_due: { en: 'Due', mr: 'थकबाकी' },
   filter_grace: { en: 'Current month pending', mr: 'चालू महिना बाकी' },
+  grace_short: { en: 'Current month', mr: 'चालू महिना' },
   filter_advance: { en: 'Advance', mr: 'आधीच भरले' },
   filter_clear: { en: 'Paid', mr: 'भरले' },
   no_flats_match: { en: 'No flats match', mr: 'कोणतीही सदनिका जुळत नाही' },
