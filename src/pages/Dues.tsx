@@ -4,6 +4,7 @@ import { ChevronLeft, Share2 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
+import { useAuth } from '@/hooks/useAuth'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -13,6 +14,7 @@ import { currentMonthIndex, monthLabel } from '@/lib/dates'
 export function Dues() {
   const { t, lang } = useI18n()
   const { data, computed, loading } = useAppData()
+  const { isAdmin } = useAuth()
   const cardRef = useRef<HTMLDivElement>(null)
   const [sharing, setSharing] = useState(false)
   const [sortKey, setSortKey] = useState<'amount' | 'flat' | 'name'>('amount')
@@ -89,9 +91,11 @@ export function Dues() {
             {sortBtn('flat', t('flat'))}
             {sortBtn('name', t('col_name'))}
           </div>
-          <Button variant="secondary" size="sm" disabled={sharing} onClick={shareImage}>
-            <Share2 className="h-4 w-4" />{t('share_image')}
-          </Button>
+          {isAdmin && (
+            <Button variant="secondary" size="sm" disabled={sharing} onClick={shareImage}>
+              <Share2 className="h-4 w-4" />{t('share_image')}
+            </Button>
+          )}
         </div>
       )}
 
