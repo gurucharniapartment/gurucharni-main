@@ -365,33 +365,31 @@ function ExpenseDialog({ data, reload }: { data: AppData; reload: () => void }) 
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  // Water tanker is the only category allowed a ₹0 amount (a free tanker).
+  // Water tanker can be booked as a "Paid" tanker (enter an amount) or a "Free"
+  // tanker (₹0, remark auto-set to "Free tanker"). Both remain in the same
+  // Water tanker category, so reports and totals are unaffected.
   const isWaterTanker = cats.find((c) => c.id === categoryId)?.name_en === 'Water tanker'
+  const [tankerKind, setTankerKind] = useState<'paid' | 'free'>('paid')
+  const isFreeTanker = isWaterTanker && tankerKind === 'free'
 
   // Watchman salary is fixed ₹2,500 — pre-fill (still editable) when selected.
   useEffect(() => {
     if (cats.find((c) => c.id === categoryId)?.name_en === 'Watchman salary') setAmount('2500')
   }, [categoryId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Water tanker at ₹0 = a free tanker; auto-label the remark, and clear that
-  // auto-label again if a real amount is entered.
-  useEffect(() => {
-    if (!isWaterTanker) return
-    const n = Number.parseInt(amount) || 0
-    if (amount.trim() !== '' && n === 0) setRemark('Free tanker')
-    else if (n > 0) setRemark((r) => (r === 'Free tanker' ? '' : r))
-  }, [amount, isWaterTanker]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Reset the tanker Paid/Free choice whenever the category changes.
+  useEffect(() => { setTankerKind('paid') }, [categoryId])
 
   async function save() {
     setBusy(true); setErr(null)
     try {
-      const amt = Number.parseInt(amount) || 0
-      // Water tanker may be ₹0 (free); every other category needs a positive amount.
-      if (isWaterTanker ? amt < 0 : amt <= 0) throw new Error('Enter a valid amount')
-      const finalRemark = isWaterTanker && amt === 0 ? remark.trim() || 'Free tanker' : remark.trim()
+      const amt = isFreeTanker ? 0 : (Number.parseInt(amount) || 0)
+      // Free tanker is ₹0; every paid entry needs a positive amount.
+      if (!isFreeTanker && amt <= 0) throw new Error('Enter a valid amount')
+      const finalRemark = isFreeTanker ? 'Free tanker' : remark.trim()
       if (!finalRemark) throw new Error('Remark is required')
       await addExpense({ categoryId: categoryId || cats[0]?.id, expenseDate: date, amount: amt, remark: finalRemark })
-      reload(); setOpen(false); setAmount(''); setRemark('')
+      reload(); setOpen(false); setAmount(''); setRemark(''); setTankerKind('paid')
     } catch (e) { setErr(msgOf(e)) } finally { setBusy(false) }
   }
 
@@ -407,20 +405,29 @@ function ExpenseDialog({ data, reload }: { data: AppData; reload: () => void }) 
               {cats.map((c) => <option key={c.id} value={c.id}>{lang === 'mr' ? c.name_mr : c.name_en}</option>)}
             </Select>
           </Field>
+          {isWaterTanker && (
+            <div className="flex rounded-full bg-[var(--color-secondary)] p-0.5">
+              <button type="button" onClick={() => setTankerKind('paid')}
+                className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all', tankerKind === 'paid' ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{t('tanker_paid')}</button>
+              <button type="button" onClick={() => setTankerKind('free')}
+                className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all', tankerKind === 'free' ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{t('tanker_free')}</button>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <Field label={t('amount')}>
-              <Input type="number" min={isWaterTanker ? 0 : 1} value={amount} onChange={(e) => setAmount(e.target.value)} />
+              {isFreeTanker
+                ? <Input value="₹0" disabled readOnly />
+                : <Input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)} />}
             </Field>
             <Field label={t('date')}>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>
           <p className="text-[11px] text-[var(--color-muted-foreground)]">{t('date_format_note')}</p>
-          {isWaterTanker && (
-            <p className="text-[11px] text-[var(--color-muted-foreground)]">{t('free_tanker_hint')}</p>
-          )}
           <Field label={t('remark')}>
-            <Input value={remark} onChange={(e) => setRemark(e.target.value)} />
+            {isFreeTanker
+              ? <Input value="Free tanker" disabled readOnly />
+              : <Input value={remark} onChange={(e) => setRemark(e.target.value)} />}
           </Field>
           <ErrorLine msg={err} />
           <div className="flex justify-end gap-2 pt-1">
