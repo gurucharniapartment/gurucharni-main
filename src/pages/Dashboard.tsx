@@ -88,7 +88,7 @@ function FlatCard({ f, highlight }: { f: FlatWithDue; highlight?: boolean }) {
           <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold', st.chip)}>
             {f.sort_order}
           </span>
-          <span className="min-w-0 flex-1 truncate text-[14px] font-semibold tracking-tight">{flatName(f, lang)}</span>
+          <span title={flatName(f, lang)} className="min-w-0 flex-1 truncate text-[14px] font-semibold tracking-tight">{flatName(f, lang)}</span>
         </div>
         <div className="mt-auto pt-3">
           <div className={cn('text-[18px] font-bold leading-none display-tight', st.text)}>{primary}</div>
