@@ -226,18 +226,27 @@ export function Dashboard() {
       </Link>
 
       {/* At-a-glance status counts — overdue / current-month / advance */}
-      <div className="mb-6 grid grid-cols-3 gap-2.5">
-        <div className="rounded-[var(--radius-lg)] bg-[var(--color-status-due-bg)] p-3 text-center">
-          <div className="text-[26px] font-bold leading-none display-tight text-[var(--color-status-due)]">{overdueCount}</div>
-          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-status-due)]">{t('st_overdue')}</div>
+      <div className="mb-6 grid grid-cols-3 gap-2">
+        <div className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-status-due-bg)] px-2 py-1.5">
+          <span className="text-[19px] font-bold leading-none display-tight text-[var(--color-status-due)]">{overdueCount}</span>
+          <span className="leading-tight">
+            <span className="block text-[11px] font-semibold text-[var(--color-status-due)]">{t('st_overdue')}</span>
+            <span className="block text-[10px] text-[var(--color-muted-foreground)]">{t('hint_overdue')}</span>
+          </span>
         </div>
-        <div className="rounded-[var(--radius-lg)] bg-[var(--color-status-cooldown-bg)] p-3 text-center">
-          <div className="text-[26px] font-bold leading-none display-tight text-[var(--color-status-cooldown)]">{graceCount}</div>
-          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-status-cooldown)]">{t('grace_short')}</div>
+        <div className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-status-cooldown-bg)] px-2 py-1.5">
+          <span className="text-[19px] font-bold leading-none display-tight text-[var(--color-status-cooldown)]">{graceCount}</span>
+          <span className="leading-tight">
+            <span className="block text-[11px] font-semibold text-[var(--color-status-cooldown)]">{t('grace_short')}</span>
+            <span className="block text-[10px] text-[var(--color-muted-foreground)]">{t('hint_grace')}</span>
+          </span>
         </div>
-        <div className="rounded-[var(--radius-lg)] bg-[var(--color-status-clear-bg)] p-3 text-center">
-          <div className="text-[26px] font-bold leading-none display-tight text-[var(--color-status-clear)]">{advanceCount}</div>
-          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-status-clear)]">{t('status_advance')}</div>
+        <div className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-status-clear-bg)] px-2 py-1.5">
+          <span className="text-[19px] font-bold leading-none display-tight text-[var(--color-status-clear)]">{advanceCount}</span>
+          <span className="leading-tight">
+            <span className="block text-[11px] font-semibold text-[var(--color-status-clear)]">{t('status_advance')}</span>
+            <span className="block text-[10px] text-[var(--color-muted-foreground)]">{t('hint_advance')}</span>
+          </span>
         </div>
       </div>
 
