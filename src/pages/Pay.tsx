@@ -141,6 +141,17 @@ export function Pay() {
 
       {flatId && (
       <Card className="mt-4 flex flex-col items-center gap-3 p-4 text-center">
+        {/* Reference maintenance amounts (1 month & 6 months) before the QR. */}
+        <div className="w-full space-y-2">
+          <div className="flex items-center justify-between gap-3 rounded-full bg-[var(--color-secondary)] px-4 py-2.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">{t('monthly_maintenance')}</span>
+            <span className="text-[17px] font-bold tabular-nums">{formatRupees(charge)}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3 rounded-full bg-[var(--color-secondary)] px-4 py-2.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">{t('six_month_maintenance')}</span>
+            <span className="text-[17px] font-bold tabular-nums">{formatRupees(charge * 6)}</span>
+          </div>
+        </div>
         <div className="text-[13px] text-[var(--color-muted-foreground)]">
           {mode === 'dues'
             ? effectivePart === 'arrears' ? t('clearing_outstanding') : effectivePart === 'month' ? `${t('paying_this_month')} · ${curMonth}` : t('paying_both')
