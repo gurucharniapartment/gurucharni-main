@@ -32,7 +32,7 @@ const msgOf = (e: unknown) => (e instanceof Error ? e.message : String(e))
 function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: Computed; reload: () => void }) {
   const { t, lang } = useI18n()
   const [open, setOpen] = useState(false)
-  const [flatId, setFlatId] = useState('G1')
+  const [flatId, setFlatId] = useState('')
   const [charge, setCharge] = useState('800')
   const [type, setType] = useState('residential')
   const [mode, setMode] = useState<'clear' | 'due' | 'advance'>('clear')
@@ -62,6 +62,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
   async function save() {
     setBusy(true); setErr(null)
     try {
+      if (!flatId) throw new Error('Select a flat first')
       const ch = Number.parseInt(charge)
       if (!ch || ch <= 0) throw new Error('Enter a valid monthly charge')
 
@@ -94,7 +95,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
   )
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setConfirming(false) }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setConfirming(false); setFlatId('') } }}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm"><Settings2 className="h-4 w-4" />{t('flat_setup')}</Button>
       </DialogTrigger>
@@ -102,7 +103,8 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <Field label={t('select_flat')}>
-              <Select value={flatId} onChange={(e) => setFlatId(e.target.value)}>
+              <Select className={cn(!flatId && 'glow-attn')} value={flatId} onChange={(e) => setFlatId(e.target.value)}>
+                <option value="" disabled>{t('choose_your_flat')}</option>
                 {data.flats.map((f) => <option key={f.id} value={f.id}>{flatLabel(f, lang)}</option>)}
               </Select>
             </Field>
@@ -141,6 +143,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
             <div className="flex justify-end gap-2 pt-1">
               <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
               <Button size="sm" onClick={() => {
+                if (!flatId) { setErr('Select a flat first'); return }
                 const ch = Number.parseInt(charge)
                 if (!ch || ch <= 0) { setErr('Enter a valid monthly charge'); return }
                 setErr(null); setConfirming(true)
@@ -165,7 +168,7 @@ function FlatSetupDialog({ data, computed, reload }: { data: AppData; computed: 
 function PaymentDialog({ computed, reload }: { computed: Computed; reload: () => void }) {
   const { t, lang } = useI18n()
   const [open, setOpen] = useState(false)
-  const [flatId, setFlatId] = useState('G1')
+  const [flatId, setFlatId] = useState('')
   const [kind, setKind] = useState<'maintenance' | 'due_clear'>('maintenance')
   const [fromM, setFromM] = useState(currentMonthInput())
   const [toM, setToM] = useState(currentMonthInput())
@@ -196,6 +199,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   async function save() {
     setBusy(true); setErr(null)
     try {
+      if (!flatId) throw new Error('Select a flat first')
       if (amt <= 0) throw new Error('Enter a valid amount')
       if (kind === 'maintenance' && monthCount <= 0) throw new Error('Choose a valid month range')
       const newId = await recordPayment({
@@ -235,7 +239,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
   return (
     <Dialog open={open} onOpenChange={(o) => {
       setOpen(o)
-      if (!o) { setConfirming(false); setSavedId(null); setFromM(currentMonthInput()); setToM(currentMonthInput()); setAmount(''); setNote('') }
+      if (!o) { setConfirming(false); setSavedId(null); setFlatId(''); setFromM(currentMonthInput()); setToM(currentMonthInput()); setAmount(''); setNote('') }
     }}>
       <DialogTrigger asChild>
         <Button size="sm"><Wallet className="h-4 w-4" />{t('record_payment')}</Button>
@@ -268,7 +272,8 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
           </div>
 
           <Field label={t('select_flat')}>
-            <Select value={flatId} onChange={(e) => setFlatId(e.target.value)}>
+            <Select className={cn(!flatId && 'glow-attn')} value={flatId} onChange={(e) => setFlatId(e.target.value)}>
+              <option value="" disabled>{t('choose_your_flat')}</option>
               {computed.flatsWithDue.map((f) => (
                 <option key={f.id} value={f.id}>{flatLabel(f, lang)} — {formatRupees(f.due.dueAmount)} {t('due_label')}</option>
               ))}
@@ -332,6 +337,7 @@ function PaymentDialog({ computed, reload }: { computed: Computed; reload: () =>
             <div className="flex justify-end gap-2 pt-1">
               <DialogClose asChild><Button variant="ghost" size="sm">{t('cancel')}</Button></DialogClose>
               <Button size="sm" onClick={() => {
+                if (!flatId) { setErr('Select a flat first'); return }
                 if (amt <= 0) { setErr('Enter a valid amount'); return }
                 if (kind === 'maintenance' && monthCount <= 0) { setErr('Choose a valid month range'); return }
                 setErr(null); setConfirming(true)
