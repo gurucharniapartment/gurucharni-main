@@ -12,7 +12,7 @@ function charge(flatId: string, amount: number, from = '2026-07-01'): FlatCharge
 
 // Charges for the real building.
 const CHARGES: FlatCharge[] = [
-  charge('G1', 400), charge('G2', 850),
+  charge('G1', 400), charge('G2', 1250),
   charge('G3', 800), charge('G4', 800), charge('G5', 800), charge('G6', 800),
   charge('G7', 1250), charge('G8', 800), charge('G9', 800), charge('G10', 800),
   charge('G11', 800), charge('G12', 1250), charge('G13', 800), charge('G14', 800),
@@ -28,8 +28,8 @@ describe('real building — as of 9 July (grace window)', () => {
     expect(r.dueAmount).toBe(400)
     expect(r.status).toBe('cooldown')
   })
-  it('G2 rate ₹850, only July owed → cooldown ₹850', () => {
-    expect(due('G2', 0, 0, 9)).toMatchObject({ dueAmount: 850, status: 'cooldown' })
+  it('G2 rate ₹1,250, only July owed → cooldown ₹1,250', () => {
+    expect(due('G2', 0, 0, 9)).toMatchObject({ dueAmount: 1250, status: 'cooldown' })
   })
   it('G3 arrears + July → due ₹5,600 (red even in grace)', () => {
     const r = due('G3', 4800, 0, 9)

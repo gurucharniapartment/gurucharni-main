@@ -69,10 +69,16 @@ export function FlatStatement() {
         <div className="mt-3 border-b border-[var(--color-border)] pb-4">
           <div>
             <div className="text-[17px] font-semibold tracking-tight">{flatName(flat, lang)}</div>
-            <div className="text-[12px] text-[var(--color-muted-foreground)]">{t('flat')} {flat.id} · {t(type)} · {formatRupees(s.monthlyCharge)}/mo</div>
+            <div className="text-[12px] text-[var(--color-muted-foreground)]">{t('flat')} {flat.id} · {t(type)}</div>
           </div>
 
-          <div className={cn('mt-2 text-[19px] font-bold', meta.cls)}>{meta.label}</div>
+          {/* Per-month maintenance amount, prominent rounded bar. */}
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-full bg-[var(--color-secondary)] px-4 py-2.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">{t('monthly_maintenance')}</span>
+            <span className="text-[17px] font-bold tabular-nums">{formatRupees(s.monthlyCharge)}</span>
+          </div>
+
+          <div className={cn('mt-3 text-[19px] font-bold', meta.cls)}>{meta.label}</div>
 
           <div className="mt-2 space-y-1 text-[13px]">
             {(s.status === 'advance' || s.status === 'clear') && s.paidThroughIdx != null && (

@@ -154,6 +154,7 @@ const STRINGS: Dict = {
 
   // Statement / receipt / audit
   account_statement: { en: 'Account Statement', mr: 'खाते उतारा' },
+  monthly_maintenance: { en: 'Monthly maintenance', mr: 'मासिक देखभाल' },
   opening_balance_row: { en: 'Opening balance', mr: 'प्रारंभिक शिल्लक' },
   maintenance_charge: { en: 'Maintenance', mr: 'देखभाल शुल्क' },
   payment_row: { en: 'Payment received', mr: 'पेमेंट मिळाले' },
