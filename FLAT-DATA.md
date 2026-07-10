@@ -6,7 +6,7 @@
   July 2026 onward; payments reduce it; advance is auto-derived when the balance goes negative.
 - **Rates (each a fixed rule):**
   - G1 = ₹400/month (₹2,400 per 6 months)
-  - G2 = ₹1,250/month (₹7,500 per 6 months)
+  - G2 = ₹850/month (₹5,100 per 6 months)
   - G7, G12 = tenant-occupied, ₹1,250/month (₹7,500 per 6 months)
   - All other flats = ₹800/month.
 - July 2026 charge is pending for everyone except G10 (paid in advance through Dec 2026).
@@ -15,7 +15,7 @@
 | Flat | Type | ₹/month | Opening balance (pre-July) | Note |
 |------|------|---------|-----------------------------|------|
 | G1   | Resi | 400     | 0 (clear thru June)         | July pending |
-| G2   | Resi | 1250    | 0 (clear thru June)         | July pending |
+| G2   | Resi | 850     | 0 (clear thru June)         | July pending |
 | G3   | Resi | 800     | 4,800 due                   | + July pending |
 | G4   | Resi | 800     | 0                           | July pending |
 | G5   | Resi | 800     | 0                           | July pending |
