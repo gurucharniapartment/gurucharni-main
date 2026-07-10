@@ -37,8 +37,12 @@ export function Pay() {
   // Advance/clear flats have paidThroughIdx; owing flats (null) start at the current month.
   const nextPayableIdx = (fwd?.due.paidThroughIdx ?? curIdx - 1) + 1
 
-  // Default to "pay dues" when something is owed, else "pay ahead". Reset the sub-choice.
-  useEffect(() => { setMode(outstanding > 0 ? 'dues' : 'months'); setDuePart('both') }, [flatId]) // eslint-disable-line
+  const owes = outstanding > 0
+  // Default to "pay dues" when something is owed, else "pay ahead"; reset the sub-choice.
+  // `owes` is a dependency so a deep-linked flat (data still loading at mount)
+  // lands on the correct tab once its dues are known — overdue flats never open
+  // on "pay ahead".
+  useEffect(() => { setMode(owes ? 'dues' : 'months'); setDuePart('both') }, [flatId, owes]) // eslint-disable-line
 
   const m = Math.max(1, months)
   const toIdx = nextPayableIdx + m - 1
