@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Share2 } from 'lucide-react'
+import { toPng } from 'html-to-image'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useI18n } from '@/lib/i18n'
 import { useAppData } from '@/hooks/useAppData'
+import { useAuth } from '@/hooks/useAuth'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Field } from '@/components/ui/input'
@@ -18,6 +20,9 @@ const PALETTE = ['#4f7cc4', '#57b894', '#e0a458', '#c96b6b', '#8a7bc8', '#5bb3c4
 export function Reports() {
   const { t, lang } = useI18n()
   const { data, computed, loading } = useAppData()
+  const { isAdmin } = useAuth()
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [sharing, setSharing] = useState(false)
   const minMonth = monthIndexToISO(computed.trackingStartIdx).slice(0, 7)
 
   const [searchParams] = useSearchParams()
@@ -52,6 +57,38 @@ export function Reports() {
   }
   const pieData = totalsByCategory(periodExpenses).map((r) => ({ name: catName(r.categoryId), value: r.amount }))
 
+  const fromIdx = monthIndex(fromISO)
+  const toIdx = monthIndex(`${toMonth}-01`)
+  const periodLabel = mode === 'month'
+    ? monthLabel(fromIdx, lang)
+    : `${monthLabel(fromIdx, lang)} – ${monthLabel(toIdx, lang)}`
+
+  // Render the active view (money in / money out) to a PNG and share it via the
+  // Web Share API (WhatsApp etc.); fall back to a download where unsupported.
+  async function shareImage() {
+    const node = cardRef.current
+    if (!node) return
+    setSharing(true)
+    try {
+      const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true })
+      const blob = await (await fetch(dataUrl)).blob()
+      const name = view === 'in' ? 'money-in' : 'money-out'
+      const file = new File([blob], `${name}.png`, { type: 'image/png' })
+      const title = view === 'in' ? t('money_in') : t('money_out')
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title, text: `${title} · ${periodLabel}` })
+      } else {
+        const a = document.createElement('a')
+        a.href = dataUrl; a.download = `${name}.png`
+        document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      }
+    } catch (e) {
+      if ((e as Error)?.name !== 'AbortError') console.error(e)
+    } finally {
+      setSharing(false)
+    }
+  }
+
   const seg = (m: 'month' | 'range', label: string) => (
     <button type="button" onClick={() => setMode(m)}
       className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all',
@@ -60,9 +97,16 @@ export function Reports() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link to="/"><Button variant="ghost" size="sm"><ChevronLeft className="h-4 w-4" />{t('back')}</Button></Link>
-        <h2 className="text-[17px] font-semibold tracking-tight">{t('monthly_report')}</h2>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Link to="/"><Button variant="ghost" size="sm"><ChevronLeft className="h-4 w-4" />{t('back')}</Button></Link>
+          <h2 className="text-[17px] font-semibold tracking-tight">{t('monthly_report')}</h2>
+        </div>
+        {isAdmin && (
+          <Button variant="secondary" size="sm" disabled={sharing} onClick={shareImage}>
+            <Share2 className="h-4 w-4" />{t('share_image')}
+          </Button>
+        )}
       </div>
 
       <Card className="mb-4 p-4">
@@ -100,9 +144,13 @@ export function Reports() {
           className={cn('flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all', view === 'out' ? 'bg-[var(--color-card)] shadow-sm' : 'text-[var(--color-muted-foreground)]')}>{t('money_out')}</button>
       </div>
 
+      <div ref={cardRef}>
       {view === 'in' ? (
         <Card className="p-4">
-          <h3 className="mb-2 text-[15px] font-semibold">{t('money_in')}</h3>
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <h3 className="text-[15px] font-semibold">{t('money_in')}</h3>
+            <span className="text-[12px] font-medium text-[var(--color-muted-foreground)]">{periodLabel} · {formatRupees(collected)}</span>
+          </div>
           {loading ? (
             <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
           ) : periodPayments.length === 0 ? (
@@ -127,9 +175,12 @@ export function Reports() {
         </Card>
       ) : (
       <Card className="p-4">
-        <h3 className="mb-2 text-[15px] font-semibold">{t('where_spent')}</h3>
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <h3 className="text-[15px] font-semibold">{t('where_spent')}</h3>
+          <span className="text-[12px] font-medium text-[var(--color-muted-foreground)]">{periodLabel} · {formatRupees(spent)}</span>
+        </div>
         {loading ? (
-          <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('loading')}</p>
+          <div className="flex justify-center py-8 text-[var(--color-muted-foreground)]"><Spinner size={22} /></div>
         ) : periodExpenses.length === 0 ? (
           <p className="py-8 text-center text-[13px] text-[var(--color-muted-foreground)]">{t('no_expenses_period')}</p>
         ) : (
@@ -178,6 +229,7 @@ export function Reports() {
         )}
       </Card>
       )}
+      </div>
     </div>
   )
 }
