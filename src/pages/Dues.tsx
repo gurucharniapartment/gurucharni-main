@@ -30,16 +30,17 @@ export function Dues() {
       return b.due.dueAmount - a.due.dueAmount
     })
 
-  // Flats that owe nothing: paid up ('clear') or paid ahead ('advance').
-  const clearedRows = computed.flatsWithDue
-    .filter((f) => f.due.status === 'clear' || f.due.status === 'advance')
-    .sort((a, b) => a.sort_order - b.sort_order)
-
   // Most recent non-void payment per flat (for the cleared table).
   const lastPaymentOf = (flatId: string) =>
     [...data.payments]
       .filter((p) => p.flat_id === flatId && !p.is_void)
       .sort((a, b) => b.payment_date.localeCompare(a.payment_date))[0]
+
+  // Flats that owe nothing: paid up ('clear') or paid ahead ('advance'),
+  // sorted by most recent payment first (flats with no payment last).
+  const clearedRows = computed.flatsWithDue
+    .filter((f) => f.due.status === 'clear' || f.due.status === 'advance')
+    .sort((a, b) => (lastPaymentOf(b.id)?.payment_date ?? '').localeCompare(lastPaymentOf(a.id)?.payment_date ?? ''))
 
   const totArrears = rows.reduce((s, f) => s + f.due.arrears, 0)
   const totMonth = rows.reduce((s, f) => s + f.due.currentMonthDue, 0)
